@@ -224,6 +224,12 @@ async function buildAll() {
     path.join(distDir, "manifest.json"),
   );
 
+  // Copy domains.json to dist directory if it exists
+  const domainsSrc = path.join(__dirname, "domains.json");
+  if (fs.existsSync(domainsSrc)) {
+    fs.copyFileSync(domainsSrc, path.join(distDir, "domains.json"));
+  }
+
   const totalModules = results.reduce((sum, r) => sum + r.modules.length, 0);
   const totalSize = results.reduce(
     (sum, r) => sum + r.modules.reduce((s, m) => s + m.size, 0),
