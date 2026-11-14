@@ -218,6 +218,12 @@ async function buildAll() {
   // Build all providers
   const results = await Promise.all(providerDirs.map(buildProvider));
 
+  // Copy manifest to dist directory
+  fs.copyFileSync(
+    path.join(__dirname, "manifest.json"),
+    path.join(distDir, "manifest.json"),
+  );
+
   const totalModules = results.reduce((sum, r) => sum + r.modules.length, 0);
   const totalSize = results.reduce(
     (sum, r) => sum + r.modules.reduce((s, m) => s + m.size, 0),

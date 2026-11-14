@@ -251,7 +251,7 @@ const StreamSchema = z.object({
   server: z.string().min(1, "Server name cannot be empty"),
   link: z.string().url("Stream link must be a valid URL"),
   type: z.string().min(1, "Type cannot be empty"),
-  quality: z.enum(["360", "480", "720", "1080", "2160"]).optional(),
+  quality: z.string().optional(),
   subtitles: z
     .array(
       z.object({
@@ -265,6 +265,20 @@ const StreamSchema = z.object({
   headers: z.any().optional(),
 });
 
+const PageImageSchema = z.object({
+  index: z.number().optional(),
+  imageUrl: z.string().optional(),
+  link: z.string().optional(),
+  url: z.string().optional(),
+  width: z.number().optional(),
+  height: z.number().optional(),
+  headers: z.record(z.string()).optional(),
+}).refine(data => Boolean(data.imageUrl || data.link || data.url), {
+  message: "PageImage must have an imageUrl, link, or url",
+});
+
+const StreamOrPageSchema = z.union([StreamSchema, PageImageSchema]);
+
 const LinkSchema = z.object({
   title: z.string().min(1, "Link title cannot be empty"),
   quality: z.string().optional(),
@@ -273,8 +287,13 @@ const LinkSchema = z.object({
     .array(
       z.object({
         title: z.string().min(1, "Direct link title cannot be empty"),
-        link: z.string().url("Direct link must be a valid URL"),
-        type: z.enum(["movie", "series"]).optional(),
+        link: z.string().min(1, "Direct link must be a valid URL/ID"),
+        type: z.string().optional(),
+        chapterNumber: z.number().optional(),
+        volume: z.number().optional(),
+        scanlator: z.string().optional(),
+        releaseDate: z.string().optional(),
+        language: z.string().optional(),
       }),
     )
     .optional(),
@@ -282,19 +301,29 @@ const LinkSchema = z.object({
 
 const InfoSchema = z.object({
   title: z.string().min(1, "Title cannot be empty"),
-  image: z.string().url("Image must be a valid URL"),
+  image: z.string().min(1, "Image cannot be empty"),
   synopsis: z.string(),
-  imdbId: z.string(),
+  imdbId: z.string().optional(),
   type: z.string().min(1, "Type cannot be empty"),
   tags: z.array(z.string()).optional(),
   cast: z.array(z.string()).optional(),
   rating: z.string().optional(),
   linkList: z.array(LinkSchema),
+  author: z.string().optional(),
+  artist: z.string().optional(),
+  status: z.string().optional(),
+  totalChapters: z.number().optional(),
 });
 
 const EpisodeLinkSchema = z.object({
   title: z.string().min(1, "Episode title cannot be empty"),
   link: z.string().min(1, "Episode link cannot be empty"),
+  id: z.string().optional(),
+  chapterNumber: z.number().optional(),
+  volume: z.number().optional(),
+  scanlator: z.string().optional(),
+  releaseDate: z.string().optional(),
+  language: z.string().optional(),
 });
 
 // Response schemas for each function
@@ -303,7 +332,9 @@ const responseSchemas = {
   getSearchPosts: z.array(PostSchema),
   getMeta: InfoSchema,
   getEpisodes: z.array(EpisodeLinkSchema),
-  getStream: z.array(StreamSchema),
+  getStream: z.array(StreamOrPageSchema),
+  getPages: z.array(PageImageSchema),
+  getChapters: z.array(EpisodeLinkSchema),
 };
 
 function validateResponse(functionName, result) {

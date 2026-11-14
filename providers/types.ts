@@ -60,6 +60,14 @@ export interface Stream {
   skip?: SkipInterval[];
 }
 
+export interface PageImage {
+  index: number;
+  imageUrl: string;
+  width?: number;
+  height?: number;
+  headers?: Record<string, string>;
+}
+
 // getInfo
 export interface Info {
   title: string;
@@ -75,10 +83,29 @@ export interface Info {
   rating?: string;
   linkList: Link[];
   webUrl?: string;
+  author?: string;
+  artist?: string;
+  status?: string;
+  totalChapters?: number;
 }
-// getEpisodeLinks
+
+// getEpisodeLinks / getChapters
 export interface EpisodeLink {
   title: string;
+  link: string;
+  description?: string;
+  image?: string;
+  skip?: SkipInterval[];
+}
+
+export interface ChapterLink {
+  id?: string;
+  title: string;
+  chapterNumber?: number;
+  volume?: number;
+  scanlator?: string;
+  releaseDate?: string;
+  language?: string;
   link: string;
   description?: string;
   image?: string;
@@ -89,14 +116,19 @@ export interface Link {
   title: string;
   quality?: string;
   episodesLink?: string;
-  directLinks?: {
+  directLinks?: Array<{
     title: string;
     link: string;
-    type?: "movie" | "series";
+    type?: "movie" | "series" | "comic";
     description?: string;
     image?: string;
+    chapterNumber?: number;
+    volume?: number;
+    scanlator?: string;
+    releaseDate?: string;
+    language?: string;
     skip?: SkipInterval[];
-  }[];
+  }>;
 }
 
 // catalog
@@ -128,7 +160,43 @@ export interface ProviderType {
     signal?: AbortSignal;
     providerContext: ProviderContext;
     isDownload?: boolean;
-  }) => Promise<Stream[]>;
+  }) => Promise<Stream[] | PageImage[]>;
+  GetPages?: ({
+    link,
+    type,
+    signal,
+    providerContext,
+    isDownload,
+  }: {
+    link: string;
+    type?: string;
+    signal?: AbortSignal;
+    providerContext: ProviderContext;
+    isDownload?: boolean;
+  }) => Promise<PageImage[]>;
+  GetChapters?: ({
+    url,
+    providerContext,
+  }: {
+    url: string;
+    providerContext: ProviderContext;
+  }) => Promise<ChapterLink[]>;
+  GetEpisodeLinks?: ({
+    url,
+    providerContext,
+  }: {
+    url: string;
+    providerContext: ProviderContext;
+  }) => Promise<(EpisodeLink | ChapterLink)[]>;
+  GetMetaData: ({
+    link,
+    provider,
+    providerContext,
+  }: {
+    link: string;
+    provider: Content["provider"];
+    providerContext: ProviderContext;
+  }) => Promise<Info>;
   GetHomePosts: ({
     filter,
     page,
@@ -142,22 +210,6 @@ export interface ProviderType {
     signal: AbortSignal;
     providerContext: ProviderContext;
   }) => Promise<Post[]>;
-  GetEpisodeLinks?: ({
-    url,
-    providerContext,
-  }: {
-    url: string;
-    providerContext: ProviderContext;
-  }) => Promise<EpisodeLink[]>;
-  GetMetaData: ({
-    link,
-    provider,
-    providerContext,
-  }: {
-    link: string;
-    provider: Content["provider"];
-    providerContext: ProviderContext;
-  }) => Promise<Info>;
   GetSearchPosts: ({
     searchQuery,
     page,

@@ -312,10 +312,10 @@ class ProviderTester {
                     };
                     console.log(`      ✅ Got ${streams.length} stream(s)`);
                     streams.forEach((s, i) => {
+                      const label = s.server || `Page ${s.index ?? (i + 1)}`;
+                      const detail = s.quality ? `${s.quality} quality` : (s.imageUrl ? 'comic page' : 'stream');
                       console.log(
-                        `         [${i + 1}] ${s.server} - ${
-                          s.quality || "unknown"
-                        } quality`,
+                        `         [${i + 1}] ${label} - ${detail}`,
                       );
                     });
                   } else {
@@ -392,10 +392,10 @@ class ProviderTester {
                 };
                 console.log(`      ✅ Got ${streams.length} stream(s)`);
                 streams.forEach((s, i) => {
+                  const label = s.server || `Page ${s.index ?? (i + 1)}`;
+                  const detail = s.quality ? `${s.quality} quality` : (s.imageUrl ? 'comic page' : 'stream');
                   console.log(
-                    `         [${i + 1}] ${s.server} - ${
-                      s.quality || "unknown"
-                    } quality`,
+                    `         [${i + 1}] ${label} - ${detail}`,
                   );
                 });
                 break; // One success is enough
