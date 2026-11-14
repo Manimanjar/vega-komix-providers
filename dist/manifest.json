@@ -9,21 +9,21 @@
     "disabled": false
   },
   {
-    "display_name": "Gallery Scraper Template",
-    "value": "galleryScraperTemplate",
+    "display_name": "Komix Gallery",
+    "value": "komixGallery",
     "version": "1.0.0",
-    "icon": "",
+    "icon": "https://komixgallery.com/favicon.ico",
     "type": "comic",
     "hasSettings": false,
-    "disabled": true
+    "disabled": false
   },
   {
-    "display_name": "EXAMPLE",
-    "value": "example",
-    "version": "1.0",
-    "icon": "",
-    "type": "global",
-    "hasSettings": true,
-    "disabled": true
+    "display_name": "Webtoon & Manhwa",
+    "value": "webtoonManhwa",
+    "version": "1.0.0",
+    "icon": "https://asuracomic.net/favicon.ico",
+    "type": "comic",
+    "hasSettings": false,
+    "disabled": false
   }
 ]

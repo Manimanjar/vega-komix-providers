@@ -1,18 +1,26 @@
 {
-  "updatedAt": "2026-11-14T12:00:00Z",
+  "updatedAt": "2026-11-14T17:00:00Z",
   "domains": {
     "mangadex.org": "mangadex.org",
     "uploads.mangadex.org": "uploads.mangadex.org",
     "api.mangadex.org": "api.mangadex.org",
-    "example-gallery.org": "example-gallery.org"
+    "komixgallery.com": "komixgallery.com",
+    "asuracomic.net": "asuracomic.net"
   },
   "mirrors": {
     "mangadex": [
       "https://mangadex.org",
       "https://api.mangadex.org"
     ],
-    "gallery": [
-      "https://example-gallery.org"
+    "komixGallery": [
+      "https://komixgallery.com",
+      "https://komixgallery.net",
+      "https://komixgallery.org"
+    ],
+    "webtoonManhwa": [
+      "https://asuracomic.net",
+      "https://asuracomics.com",
+      "https://asura.gg"
     ]
   }
 }

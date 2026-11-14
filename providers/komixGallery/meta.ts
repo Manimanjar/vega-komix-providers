@@ -80,6 +80,33 @@ export async function getMeta({
       languages.length > 0 ? ` in ${languages.join(", ")}` : ""
     }.`;
 
+  // Support single-room series collection: check if multiple chapters or single gallery
+  const chapterElements = $(".chapters a, .chapter-list a, .volume-list a");
+  const directLinks = [];
+
+  if (chapterElements.length > 0) {
+    chapterElements.each((idx, el) => {
+      const chEl = $(el);
+      const chHref = chEl.attr("href") || "";
+      const chTitle = chEl.text().trim() || `Chapter ${idx + 1}`;
+      const fullChLink = chHref.startsWith("http")
+        ? chHref
+        : `${BASE_URL}${chHref.startsWith("/") ? "" : "/"}${chHref}`;
+
+      directLinks.push({
+        title: chTitle,
+        link: fullChLink,
+      });
+    });
+  }
+
+  if (directLinks.length === 0) {
+    directLinks.push({
+      title: `Read Gallery${pageCount ? ` (${pageCount} pages)` : ""}`,
+      link,
+    });
+  }
+
   return {
     title: mainTitle,
     image,
@@ -90,22 +117,13 @@ export async function getMeta({
     author,
     artist,
     status: "COMPLETED",
-    totalChapters: 1,
+    totalChapters: directLinks.length,
     tags: allTags.length > 0 ? allTags : ["Doujinshi", "Manga"],
     linkList: [
       {
         title: "Gallery Reader",
-        directLinks: [
-          {
-            title: `Read Gallery${pageCount ? ` (${pageCount} pages)` : ""}`,
-            link,
-            type: "comic",
-            scanlator: artist,
-            language: languages[0] || "EN",
-          },
-        ],
+        directLinks,
       },
     ],
-    webUrl: link.startsWith("http") ? link : `${BASE_URL}${link}`,
   };
 }

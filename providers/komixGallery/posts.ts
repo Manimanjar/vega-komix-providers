@@ -1,6 +1,6 @@
 import { Post, ProviderContext } from "../types";
 
-export const BASE_URL = "https://example-gallery.org";
+export const BASE_URL = "https://komixgallery.com";
 
 /**
  * Fetch HTML with automatic Cloudflare WAF WebView challenge fallback
@@ -23,6 +23,7 @@ export async function fetchWithWafFallback(
           "Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
       },
       signal,
+      timeout: 10000,
     });
 
     const html = typeof res.data === "string" ? res.data : String(res.data);
@@ -34,8 +35,7 @@ export async function fetchWithWafFallback(
       html.includes("Just a moment...") ||
       html.includes("Enable JavaScript and cookies to continue");
 
-    if (isChallenge) {
-      console.log(`[galleryScraper] Cloudflare challenge detected on ${fullUrl}, opening WAF WebView...`);
+    if (isChallenge && providerContext.openWebView) {
       const solved = await providerContext.openWebView(fullUrl, {
         title: "Verifying Gallery Access...",
         description: "Please complete the verification challenge to continue.",
@@ -47,8 +47,7 @@ export async function fetchWithWafFallback(
     return html;
   } catch (err: any) {
     const status = err?.response?.status;
-    if (status === 403 || status === 503) {
-      console.log(`[galleryScraper] HTTP ${status} encountered on ${fullUrl}, falling back to WAF WebView...`);
+    if ((status === 403 || status === 503) && providerContext.openWebView) {
       const solved = await providerContext.openWebView(fullUrl, {
         title: "Solving Cloudflare Verification...",
         description: "Cloudflare challenge detected. Please wait while verification completes.",
@@ -71,7 +70,6 @@ function parseGalleryCards(
   const $ = cheerio.load(html);
   const posts: Post[] = [];
 
-  // Match standard gallery card containers (.gallery, .thumb, .gallery-card, .book-card)
   const items = $(".gallery, .thumb, .gallery-card, .book-item, article.item");
 
   items.each((_, el) => {
@@ -84,13 +82,11 @@ function parseGalleryCards(
       ? href
       : `${BASE_URL}${href.startsWith("/") ? "" : "/"}${href}`;
 
-    // Extract title
     const title =
       card.find(".caption, .title, .gallery-title, h2, h3").first().text().trim() ||
       linkEl.attr("title") ||
       "Untitled Gallery";
 
-    // Extract image with lazy-loading fallbacks
     const imgEl = card.find("img").first();
     const imageSrc =
       imgEl.attr("data-src") ||
@@ -104,7 +100,6 @@ function parseGalleryCards(
       ? imageSrc
       : `${BASE_URL}${imageSrc.startsWith("/") ? "" : "/"}${imageSrc}`;
 
-    // Tag / Language badge
     const tag = card.find(".tag, .badge, .language").first().text().trim() || undefined;
 
     posts.push({
@@ -123,40 +118,63 @@ function parseGalleryCards(
 export async function getPosts({
   filter,
   page = 1,
-  providerValue = "galleryScraperTemplate",
+  providerValue,
   signal,
   providerContext,
 }: {
-  filter: string;
-  page: number;
+  filter?: string;
+  page?: number;
   providerValue: string;
   signal?: AbortSignal;
   providerContext: ProviderContext;
 }): Promise<Post[]> {
-  const pageParam = page > 1 ? (filter.includes("?") ? `&page=${page}` : `?page=${page}`) : "";
-  const targetUrl = `${filter || "/"}${pageParam}`;
+  let endpoint = `${BASE_URL}/`;
 
-  const html = await fetchWithWafFallback(targetUrl, providerContext, signal);
-  return parseGalleryCards(html, providerValue, providerContext.cheerio);
+  if (filter === "popular") {
+    endpoint = `${BASE_URL}/popular?page=${page}`;
+  } else if (filter === "top-rated") {
+    endpoint = `${BASE_URL}/top?page=${page}`;
+  } else if (filter?.startsWith("language:")) {
+    const lang = filter.replace("language:", "");
+    endpoint = `${BASE_URL}/language/${lang}/?page=${page}`;
+  } else if (filter?.startsWith("category:")) {
+    const cat = filter.replace("category:", "");
+    endpoint = `${BASE_URL}/category/${cat}/?page=${page}`;
+  } else if (filter?.startsWith("tag:")) {
+    const tag = filter.replace("tag:", "");
+    endpoint = `${BASE_URL}/tag/${tag}/?page=${page}`;
+  } else {
+    endpoint = `${BASE_URL}/?page=${page}`;
+  }
+
+  try {
+    const html = await fetchWithWafFallback(endpoint, providerContext, signal);
+    return parseGalleryCards(html, providerValue, providerContext.cheerio);
+  } catch {
+    return [];
+  }
 }
 
 export async function getSearchPosts({
   searchQuery,
   page = 1,
-  providerValue = "galleryScraperTemplate",
+  providerValue,
   signal,
   providerContext,
 }: {
   searchQuery: string;
-  page: number;
+  page?: number;
   providerValue: string;
   signal?: AbortSignal;
   providerContext: ProviderContext;
 }): Promise<Post[]> {
-  const encodedQuery = encodeURIComponent(searchQuery.trim());
-  const pageParam = page > 1 ? `&page=${page}` : "";
-  const searchUrl = `/search/?q=${encodedQuery}${pageParam}`;
+  const query = encodeURIComponent(searchQuery.trim());
+  const endpoint = `${BASE_URL}/search/?q=${query}&page=${page}`;
 
-  const html = await fetchWithWafFallback(searchUrl, providerContext, signal);
-  return parseGalleryCards(html, providerValue, providerContext.cheerio);
+  try {
+    const html = await fetchWithWafFallback(endpoint, providerContext, signal);
+    return parseGalleryCards(html, providerValue, providerContext.cheerio);
+  } catch {
+    return [];
+  }
 }

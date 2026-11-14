@@ -2,12 +2,12 @@ const cheerio = require("cheerio");
 const { providerContext } = require("./provider-test-context");
 
 async function testGalleryTemplate() {
-  console.log("=== Testing Gallery Scraper Template ===");
+  console.log("=== Testing Komix Gallery Scraper ===");
 
-  const catalogModule = require("../dist/galleryScraperTemplate/catalog.js");
-  const postsModule = require("../dist/galleryScraperTemplate/posts.js");
-  const metaModule = require("../dist/galleryScraperTemplate/meta.js");
-  const streamModule = require("../dist/galleryScraperTemplate/stream.js");
+  const catalogModule = require("../dist/komixGallery/catalog.js");
+  const postsModule = require("../dist/komixGallery/posts.js");
+  const metaModule = require("../dist/komixGallery/meta.js");
+  const streamModule = require("../dist/komixGallery/stream.js");
 
   // 1. Catalog
   console.log("\n1. Testing Catalog...");

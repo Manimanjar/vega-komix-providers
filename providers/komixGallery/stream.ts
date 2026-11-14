@@ -3,9 +3,6 @@ import { BASE_URL, fetchWithWafFallback } from "./posts";
 
 /**
  * Convert a thumbnail CDN URL into its full-resolution image URL.
- * Example patterns supported:
- * 1. https://t.gallery.org/galleries/123/1t.jpg -> https://i.gallery.org/galleries/123/1.jpg
- * 2. https://domain.com/thumbs/123/1_thumb.jpg -> https://domain.com/images/123/1.jpg
  */
 function thumbnailToFullRes(thumbUrl: string): string {
   let url = thumbUrl;
@@ -107,22 +104,21 @@ export async function getStream({
         headers: {
           Referer: `${BASE_URL}/`,
           Origin: BASE_URL,
+          "User-Agent":
+            "Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
         },
       });
     });
   }
 
-  // Format array compatible with both PageImage[] and Stream[]
-  return pages.map((p, idx) => ({
-    index: p.index ?? idx,
-    server: `Gallery Page ${idx + 1}`,
-    link: p.imageUrl,
-    imageUrl: p.imageUrl,
+  return pages.map((page, index) => ({
+    index,
+    server: `Gallery Page ${index + 1}`,
+    link: page.imageUrl,
+    imageUrl: page.imageUrl,
     type: "image",
-    quality: "Original",
-    headers: p.headers,
+    headers: page.headers,
   }));
 }
 
-// Export getPages alias for direct reader use
 export const getPages = getStream;
