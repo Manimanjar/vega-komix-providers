@@ -15,7 +15,7 @@
     "icon": "",
     "type": "comic",
     "hasSettings": false,
-    "disabled": false
+    "disabled": true
   },
   {
     "display_name": "EXAMPLE",
@@ -24,6 +24,6 @@
     "icon": "",
     "type": "global",
     "hasSettings": true,
-    "disabled": false
+    "disabled": true
   }
 ]
