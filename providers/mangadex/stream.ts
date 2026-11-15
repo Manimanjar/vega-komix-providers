@@ -4,12 +4,12 @@ const BASE_API = "https://api.mangadex.org";
 
 function parseChapterId(link: string): string {
   if (!link) return "";
-  const cleaned = link.trim().replace(/\/$/, "");
-  if (cleaned.includes("/")) {
-    const parts = cleaned.split("/");
+  const withoutQuery = link.trim().split("?")[0].split("#")[0].replace(/\/$/, "");
+  if (withoutQuery.includes("/")) {
+    const parts = withoutQuery.split("/");
     return parts[parts.length - 1];
   }
-  return cleaned;
+  return withoutQuery;
 }
 
 async function fetchMangaDexJson(
