@@ -1,11 +1,9 @@
 {
-  "updatedAt": "2026-11-15T04:00:00Z",
+  "updatedAt": "2026-11-15T10:00:00Z",
   "domains": {
     "mangadex.org": "mangadex.org",
     "uploads.mangadex.org": "uploads.mangadex.org",
     "api.mangadex.org": "api.mangadex.org",
-    "komixgallery.com": "komixgallery.com",
-    "asuracomic.net": "asuracomic.net",
     "8muses.io": "8muses.io",
     "cdn.8muses.io": "cdn.8muses.io",
     "allporncomic.com": "allporncomic.com",
@@ -25,16 +23,6 @@
     "mangadex": [
       "https://mangadex.org",
       "https://api.mangadex.org"
-    ],
-    "komixGallery": [
-      "https://komixgallery.com",
-      "https://komixgallery.net",
-      "https://komixgallery.org"
-    ],
-    "webtoonManhwa": [
-      "https://asuracomic.net",
-      "https://asuracomics.com",
-      "https://asura.gg"
     ],
     "eightMuses": [
       "https://8muses.io",

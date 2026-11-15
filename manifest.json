@@ -9,24 +9,6 @@
     "disabled": false
   },
   {
-    "display_name": "Komix Gallery",
-    "value": "komixGallery",
-    "version": "1.0.0",
-    "icon": "https://komixgallery.com/favicon.ico",
-    "type": "comic",
-    "hasSettings": false,
-    "disabled": false
-  },
-  {
-    "display_name": "Webtoon & Manhwa",
-    "value": "webtoonManhwa",
-    "version": "1.0.0",
-    "icon": "https://asuracomic.net/favicon.ico",
-    "type": "comic",
-    "hasSettings": false,
-    "disabled": false
-  },
-  {
     "display_name": "8Muses",
     "value": "eightMuses",
     "version": "1.0.0",

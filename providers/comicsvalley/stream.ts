@@ -1,6 +1,16 @@
 import { PageImage, ProviderContext } from "../types";
 import { BASE_URL, BROWSER_HEADERS, cleanThumbnailUrl, fetchWithResilientRetry, preloadedPosts } from "./posts";
 
+function extractLargestFromSrcset(srcset: string): string {
+  if (!srcset) return "";
+  const parts = srcset.split(",").map((p) => p.trim()).filter(Boolean);
+  if (parts.length === 0) return "";
+  // The last candidate in WordPress srcset is usually the largest resolution
+  const lastCandidate = parts[parts.length - 1];
+  const url = lastCandidate.split(/\s+/)[0]?.trim();
+  return url || "";
+}
+
 export async function getStream({
   link,
   signal,
@@ -19,19 +29,57 @@ export async function getStream({
     const html = await fetchWithResilientRetry(link, providerContext, signal);
     const $ = providerContext.cheerio.load(html || "");
 
-    $(
-      ".page-break img, .reading-content img, .entry-content img, .wp-manga-chapter-img, .separator a img, img.size-full",
-    ).each((_, el) => {
-      const rawSrc =
+    const selectors = [
+      ".entry-content img",
+      ".wp-block-image img",
+      ".post-content img",
+      ".single-content img",
+      "figure img",
+      "p img",
+      "article img",
+      ".page-break img",
+      ".reading-content img",
+      ".separator a img",
+      "img.size-full",
+    ].join(", ");
+
+    $(selectors).each((_, el) => {
+      const srcset = $(el).attr("srcset") || $(el).attr("data-srcset") || "";
+      const largestFromSrcset = extractLargestFromSrcset(srcset);
+
+      const rawSrc = (
+        largestFromSrcset ||
+        $(el).attr("data-orig-file") ||
+        $(el).attr("data-full-url") ||
         $(el).attr("data-src") ||
         $(el).attr("data-lazy-src") ||
         $(el).attr("data-original") ||
         $(el).attr("src") ||
-        "";
+        ""
+      ).trim();
+
+      if (!rawSrc) return;
+
+      const lower = rawSrc.toLowerCase();
+      // Filter out site logos, avatars, ads, banners, placeholders, and tracking pixels
+      if (
+        lower.includes("logo") ||
+        lower.includes("avatar") ||
+        lower.includes("gravatar") ||
+        lower.includes("banner") ||
+        lower.includes("ad-") ||
+        lower.includes("advertisement") ||
+        lower.includes("1x1") ||
+        lower.includes("spinner") ||
+        lower.includes("loading") ||
+        lower.includes("dflazy.jpg") ||
+        lower.endsWith(".svg")
+      ) {
+        return;
+      }
 
       const cleanSrc = cleanThumbnailUrl(rawSrc);
-      if (!cleanSrc || seenUrls.has(cleanSrc) || cleanSrc.includes("dflazy.jpg"))
-        return;
+      if (!cleanSrc || seenUrls.has(cleanSrc)) return;
       seenUrls.add(cleanSrc);
 
       const fullUrl = cleanSrc.startsWith("//")
@@ -50,24 +98,24 @@ export async function getStream({
         },
       });
     });
-  } catch {}
+  } catch (err) {
+    console.warn("ComicsValley stream scraping error:", err);
+  }
 
-  // Fallback: If chapter page 523'd or had no page-break images, use preloaded cover
+  // Fallback: If page had 0 extracted images, check if preloaded card has an image
   if (pages.length === 0) {
     const preloaded = preloadedPosts.get(link);
-    const fallbackImage =
-      preloaded?.image ||
-      "https://comicsvalley.com/wp-content/uploads/2025/09/While-She-Is-Waiting-For-You-WFNPaO.jpg";
-
-    pages.push({
-      index: 0,
-      imageUrl: fallbackImage,
-      headers: {
-        Referer: `${BASE_URL}/`,
-        Origin: BASE_URL,
-        "User-Agent": BROWSER_HEADERS["User-Agent"],
-      },
-    });
+    if (preloaded?.image) {
+      pages.push({
+        index: 0,
+        imageUrl: preloaded.image,
+        headers: {
+          Referer: `${BASE_URL}/`,
+          Origin: BASE_URL,
+          "User-Agent": BROWSER_HEADERS["User-Agent"],
+        },
+      });
+    }
   }
 
   return pages.map((page, index) => ({

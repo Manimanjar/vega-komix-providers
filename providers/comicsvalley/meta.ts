@@ -1,5 +1,5 @@
 import { Info, Link, ProviderContext } from "../types";
-import { cleanThumbnailUrl, fetchWithResilientRetry, preloadedPosts } from "./posts";
+import { BASE_URL, cleanThumbnailUrl, fetchWithResilientRetry, preloadedPosts } from "./posts";
 
 export async function getMeta({
   link,
@@ -14,82 +14,77 @@ export async function getMeta({
   try {
     html = await fetchWithResilientRetry(link, providerContext);
   } catch (err) {
-    // If comic page fails with 523 or timeout, use preloaded card data
-    if (preloaded) {
-      return {
-        title: preloaded.title,
-        image: preloaded.image,
-        poster: preloaded.image,
-        cover: preloaded.image,
-        synopsis: `Read ${preloaded.title} on ComicsValley. High-definition 3D and Western comic series.`,
-        imdbId: "",
-        type: "comic",
-        author: "ComicsValley",
-        tags: ["3D", "Adult Comic", "PigKing"],
-        totalChapters: 1,
-        linkList: [
-          {
-            title: "Full Comic",
-            directLinks: [
-              {
-                title: "Read Full Comic",
-                link: preloaded.link,
-                type: "comic",
-              },
-            ],
-          },
-        ],
-      };
-    }
+    console.warn("ComicsValley fetch error in getMeta:", err);
   }
 
-  const $ = providerContext.cheerio.load(html || "<html></html>");
+  const $ = providerContext.cheerio.load(html || "<html><body></body></html>");
 
+  // Title extraction from multiple possible DOM selectors
   const title =
-    $(".post-title h1").first().text().trim() ||
-    $("h1").first().text().trim() ||
+    $("h1.entry-title, h1.post-title, .entry-title, .post-title h1, h1")
+      .first()
+      .text()
+      .trim() ||
     $('meta[property="og:title"]').attr("content")?.split("-")[0]?.trim() ||
+    $("title").text().split(/[-–|]/)[0]?.trim() ||
     preloaded?.title ||
-    "ComicsValley Title";
+    "ComicsValley Comic";
 
-  const rawImage =
-    $(".summary_image img").attr("data-src") ||
-    $(".summary_image img").attr("src") ||
+  // Cover image: check first content image, meta og:image, or preloaded card
+  const firstContentImg = $(
+    ".entry-content img, .wp-block-image img, .post-content img, .single-content img, figure img, p img, .summary_image img"
+  ).first();
+
+  const rawImage = (
+    firstContentImg.attr("data-src") ||
+    firstContentImg.attr("data-lazy-src") ||
+    firstContentImg.attr("data-orig-file") ||
+    firstContentImg.attr("data-full-url") ||
+    firstContentImg.attr("src") ||
     $('meta[property="og:image"]').attr("content") ||
+    $('meta[name="twitter:image"]').attr("content") ||
     preloaded?.image ||
-    "";
+    ""
+  ).trim();
+
   const image = cleanThumbnailUrl(rawImage);
 
+  // Synopsis / Description
   const synopsis =
-    $(".description-summary p, .summary__content p, .manga-excerpt p, .entry-content p")
+    $(
+      ".description-summary p, .summary__content p, .manga-excerpt p, .entry-content p"
+    )
       .map((_, el) => $(el).text().trim())
       .get()
-      .filter(Boolean)
+      .filter((text) => text && !text.includes("Comic:") && !text.includes("Artist:"))
       .join("\n\n") ||
     $('meta[name="description"]').attr("content") ||
-    `Read ${title} on ComicsValley.`;
+    `Read ${title} on ComicsValley. High-definition full comic.`;
 
+  // Author
   const author =
-    $(".author-content a").first().text().trim() ||
-    $('a[href*="/comic-author/"]').first().text().trim() ||
+    $(".author-content a, .artist-content a").first().text().trim() ||
+    $('a[href*="/comic-author/"], a[href*="/author/"]').first().text().trim() ||
     "ComicsValley";
 
-  const status = $(".post-status .summary-content").first().text().trim();
+  const status = $(".post-status .summary-content").first().text().trim() || "COMPLETED";
 
+  // Categories & Tags
   const tags: string[] = [];
-  $('.genres-content a, a[href*="/comic-genre/"], a[href*="/comic-tag/"]').each(
-    (_, el) => {
-      const t = $(el).text().trim();
-      if (t && !tags.includes(t)) tags.push(t);
-    },
-  );
+  $(
+    ".cat-links a, .tags-links a, a[rel='tag'], .genres-content a, a[href*='/comic-genre/'], a[href*='/comic-tag/']"
+  ).each((_, el) => {
+    const t = $(el).text().trim();
+    if (t && !tags.includes(t)) tags.push(t);
+  });
 
-  const chapters: { title: string; link: string }[] = [];
+  // Extract chapters if present
+  const chapters: { id?: string; title: string; link: string; chapterNumber?: number }[] = [];
   const seenChapterLinks = new Set<string>();
 
-  $("li.wp-manga-chapter a, .wp-manga-chapter a, .chapter-item a").each(
+  $("li.wp-manga-chapter a, .wp-manga-chapter a, .chapter-item a, .version-chap li a").each(
     (_, el) => {
-      const chapLink = $(el).attr("href");
+      const chapLink = $(el).attr("href")?.trim();
       const chapTitle = $(el).text().trim();
 
       if (chapLink && !seenChapterLinks.has(chapLink)) {
@@ -99,25 +94,32 @@ export async function getMeta({
           link: chapLink,
         });
       }
-    },
+    }
   );
 
-  const sortedChapters = [...chapters].reverse();
+  let sortedChapters: { id?: string; title: string; link: string; chapterNumber?: number }[] = [];
 
-  const directLinks =
-    sortedChapters.length > 0
-      ? sortedChapters.map((ch) => ({
-          title: ch.title,
-          link: ch.link,
-          type: "comic",
-        }))
-      : [
-          {
-            title: "Read Full Comic",
-            link,
-            type: "comic",
-          },
-        ];
+  if (chapters.length > 0) {
+    sortedChapters = [...chapters].reverse();
+  } else {
+    // Single-File Chapter Rule: When no multi-chapter list exists on the page,
+    // ALWAYS populate the chapter list with a single item named exactly as the comic is titled on the website
+    sortedChapters = [
+      {
+        id: "single-1",
+        title: title,
+        chapterNumber: 1,
+        link: link,
+      },
+    ];
+  }
+
+  const directLinks = sortedChapters.map((ch, idx) => ({
+    title: ch.title || title,
+    link: ch.link || link,
+    chapterNumber: ch.chapterNumber ?? (idx + 1),
+    type: "comic" as const,
+  }));
 
   const linkList: Link[] = [
     {

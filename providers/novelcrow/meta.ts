@@ -1,5 +1,5 @@
 import { Info, Link, ProviderContext } from "../types";
-import { cleanThumbnailUrl, fetchWithResilientRetry } from "./posts";
+import { BASE_URL, BROWSER_HEADERS, cleanThumbnailUrl, fetchWithResilientRetry } from "./posts";
 
 export async function getMeta({
   link,
@@ -9,7 +9,7 @@ export async function getMeta({
   providerContext: ProviderContext;
 }): Promise<Info> {
   const html = await fetchWithResilientRetry(link, providerContext);
-  const $ = providerContext.cheerio.load(html);
+  const $ = providerContext.cheerio.load(html || "<html><body></body></html>");
 
   const title =
     $(".post-title h1").first().text().trim() ||
@@ -19,19 +19,20 @@ export async function getMeta({
 
   const rawImage =
     $(".summary_image img").attr("data-src") ||
+    $(".summary_image img").attr("data-lazy-src") ||
     $(".summary_image img").attr("src") ||
     $('meta[property="og:image"]').attr("content") ||
     "";
   const image = cleanThumbnailUrl(rawImage);
 
   const synopsis =
-    $(".description-summary p, .summary__content p, .manga-excerpt p")
+    $(".description-summary p, .summary__content p, .manga-excerpt p, .entry-content p")
       .map((_, el) => $(el).text().trim())
       .get()
       .filter(Boolean)
       .join("\n\n") ||
     $('meta[name="description"]').attr("content") ||
-    "Read this comic on NovelCrow.";
+    `Read ${title} on NovelCrow.`;
 
   const author =
     $(".author-content a").first().text().trim() ||
@@ -41,16 +42,16 @@ export async function getMeta({
   const status = $(".post-status .summary-content").first().text().trim();
 
   const tags: string[] = [];
-  $(".genres-content a").each((_, el) => {
+  $(".genres-content a, .cat-links a, .tags-links a").each((_, el) => {
     const t = $(el).text().trim();
-    if (t) tags.push(t);
+    if (t && !tags.includes(t)) tags.push(t);
   });
 
-  const chapters: { title: string; link: string }[] = [];
+  const chapters: { id?: string; title: string; link: string; chapterNumber?: number }[] = [];
   const seenChapterLinks = new Set<string>();
 
-  $("li.wp-manga-chapter a, .wp-manga-chapter a").each((_, el) => {
-    const chapLink = $(el).attr("href");
+  $("li.wp-manga-chapter a, .wp-manga-chapter a, .version-chap li a, .listing-chapters_wrap a").each((_, el) => {
+    const chapLink = $(el).attr("href")?.trim();
     const chapTitle = $(el).text().trim();
 
     if (chapLink && !seenChapterLinks.has(chapLink)) {
@@ -62,22 +63,74 @@ export async function getMeta({
     }
   });
 
-  const sortedChapters = [...chapters].reverse();
+  // If no chapters found in initial HTML, try AJAX endpoint using manga postId
+  if (chapters.length === 0) {
+    const holderId = $("#manga-chapters-holder").attr("data-id")?.trim();
+    const inputId = $('input#wp-manga-post-id, input[name="wp-manga-post-id"]').val();
+    const shortlink = $('link[rel="shortlink"]').attr("href") || "";
+    const shortlinkMatch = shortlink.match(/[?&]p=(\d+)/);
+    const htmlMatch = html.match(/id=["']manga-chapters-holder["'][^>]*data-id=["'](\d+)["']/i) || html.match(/manga_id\s*:\s*(\d+)/i);
+    const postId = holderId || (inputId ? String(inputId).trim() : "") || (shortlinkMatch ? shortlinkMatch[1] : "") || (htmlMatch ? htmlMatch[1] : "");
 
-  const directLinks =
-    sortedChapters.length > 0
-      ? sortedChapters.map((ch) => ({
-          title: ch.title,
-          link: ch.link,
-          type: "comic",
-        }))
-      : [
+    if (postId) {
+      try {
+        const ajaxRes = await providerContext.axios.post(
+          `${BASE_URL}/wp-admin/admin-ajax.php`,
+          `action=manga_get_chapters&manga=${encodeURIComponent(postId)}`,
           {
-            title: "Read Full Comic",
-            link,
-            type: "comic",
-          },
-        ];
+            headers: {
+              ...BROWSER_HEADERS,
+              ...providerContext.commonHeaders,
+              "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+              Referer: link,
+            },
+            timeout: 10000,
+          }
+        );
+
+        if (ajaxRes && ajaxRes.data) {
+          const ajaxHtml = typeof ajaxRes.data === "string" ? ajaxRes.data : String(ajaxRes.data);
+          const ajax$ = providerContext.cheerio.load(ajaxHtml);
+          ajax$("li.wp-manga-chapter a, .wp-manga-chapter a, .version-chap li a, .listing-chapters_wrap a").each((_, el) => {
+            const chapLink = ajax$(el).attr("href")?.trim();
+            const chapTitle = ajax$(el).text().trim();
+
+            if (chapLink && !seenChapterLinks.has(chapLink)) {
+              seenChapterLinks.add(chapLink);
+              chapters.push({
+                title: chapTitle || `Chapter ${chapters.length + 1}`,
+                link: chapLink,
+              });
+            }
+          });
+        }
+      } catch (err) {
+        console.warn("NovelCrow AJAX chapters fetch error:", err);
+      }
+    }
+  }
+
+  let sortedChapters: { id?: string; title: string; link: string; chapterNumber?: number }[] = [];
+  if (chapters.length > 0) {
+    sortedChapters = [...chapters].reverse();
+  } else {
+    // Single-File Chapter Fallback
+    sortedChapters = [
+      {
+        id: "single-1",
+        title: title,
+        chapterNumber: 1,
+        link: link,
+      },
+    ];
+  }
+
+  const directLinks = sortedChapters.map((ch, idx) => ({
+    title: ch.title || `Chapter ${idx + 1}`,
+    link: ch.link,
+    chapterNumber: ch.chapterNumber ?? (idx + 1),
+    type: "comic" as const,
+  }));
 
   const linkList: Link[] = [
     {

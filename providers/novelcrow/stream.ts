@@ -13,43 +13,65 @@ export async function getStream({
   isDownload?: boolean;
 }): Promise<any[]> {
   const html = await fetchWithResilientRetry(link, providerContext, signal);
-  const $ = providerContext.cheerio.load(html);
+  const $ = providerContext.cheerio.load(html || "");
 
   const pages: PageImage[] = [];
   const seenUrls = new Set<string>();
 
-  $(".page-break img, .reading-content img, .wp-manga-chapter-img").each(
-    (_, el) => {
-      const rawSrc =
-        $(el).attr("data-src") ||
-        $(el).attr("data-lazy-src") ||
-        $(el).attr("data-original") ||
-        $(el).attr("src") ||
-        "";
+  const imageSelectors = [
+    ".reading-content img",
+    ".page-break img",
+    ".entry-content img",
+    "div.text-left img",
+    ".wp-manga-chapter-img",
+  ].join(", ");
 
-      const cleanSrc = cleanThumbnailUrl(rawSrc);
-      if (!cleanSrc || seenUrls.has(cleanSrc) || cleanSrc.includes("dflazy.jpg"))
-        return;
-      seenUrls.add(cleanSrc);
+  $(imageSelectors).each((_, el) => {
+    const rawSrc = (
+      $(el).attr("data-src") ||
+      $(el).attr("data-lazy-src") ||
+      $(el).attr("data-full-url") ||
+      $(el).attr("data-original") ||
+      $(el).attr("src") ||
+      ""
+    ).trim();
 
-      const fullUrl = cleanSrc.startsWith("//")
-        ? `https:${cleanSrc}`
-        : cleanSrc.startsWith("http")
-        ? cleanSrc
-        : `${BASE_URL}${cleanSrc.startsWith("/") ? "" : "/"}${cleanSrc}`;
+    if (!rawSrc) return;
 
-      pages.push({
-        index: pages.length,
-        imageUrl: fullUrl,
-        headers: {
-          Referer: `${BASE_URL}/`,
-          Origin: BASE_URL,
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-        },
-      });
-    },
-  );
+    const lower = rawSrc.toLowerCase();
+    if (
+      lower.includes("1x1") ||
+      lower.includes("gravatar") ||
+      lower.includes("logo") ||
+      lower.includes("dflazy.jpg") ||
+      lower.endsWith(".svg") ||
+      lower.includes("spinner") ||
+      lower.includes("loading")
+    ) {
+      return;
+    }
+
+    const cleanSrc = cleanThumbnailUrl(rawSrc);
+    if (!cleanSrc || seenUrls.has(cleanSrc)) return;
+    seenUrls.add(cleanSrc);
+
+    const fullUrl = cleanSrc.startsWith("//")
+      ? `https:${cleanSrc}`
+      : cleanSrc.startsWith("http")
+      ? cleanSrc
+      : `${BASE_URL}${cleanSrc.startsWith("/") ? "" : "/"}${cleanSrc}`;
+
+    pages.push({
+      index: pages.length,
+      imageUrl: fullUrl,
+      headers: {
+        Referer: `${BASE_URL}/`,
+        Origin: BASE_URL,
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+      },
+    });
+  });
 
   return pages.map((page, index) => ({
     index,
