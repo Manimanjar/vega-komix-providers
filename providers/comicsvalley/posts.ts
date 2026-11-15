@@ -101,11 +101,7 @@ export async function fetchWithResilientRetry(
 
   throw lastError;
 }
-
-export function cleanThumbnailUrl(url: string): string {
-  if (!url) return "";
-  return url.replace(/-\d+x\d+(\.[a-zA-Z0-9]+)$/, "$1").trim();
-}
+export { cleanHighResImageUrl, cleanThumbnailUrl } from "../cleanImage";
 
 export function parseComicsValleyPosts(
   html: string,

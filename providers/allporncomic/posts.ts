@@ -66,23 +66,7 @@ export async function fetchWithWafFallback(
   }
 }
 
-/**
- * Strip thumbnail dimension resize suffixes (-350x476, -193x278) to get maximum original resolution
- */
-export function cleanThumbnailUrl(url: string): string {
-  if (!url) return "";
-  const trimmed = url.trim();
-  if (
-    trimmed.includes("dflazy") ||
-    trimmed.includes("1x1") ||
-    trimmed.endsWith(".svg") ||
-    trimmed.includes("spinner") ||
-    trimmed.includes("loading")
-  ) {
-    return "";
-  }
-  return trimmed.replace(/-\d+x\d+(\.[a-zA-Z0-9]+)$/, "$1").trim();
-}
+export { cleanHighResImageUrl, cleanThumbnailUrl } from "../cleanImage";
 
 /**
  * Parse Madara WordPress comic cards
