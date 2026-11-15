@@ -64,7 +64,7 @@ export async function getEpisodes({
 
   while (offset < total && pageCount < maxPages) {
     pageCount++;
-    const feedUrl = `${BASE_API}/manga/${mangaId}/feed?limit=${limit}&offset=${offset}&includes[]=scanlation_group&includes[]=user&order[chapter]=desc&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica`;
+    const feedUrl = `${BASE_API}/manga/${mangaId}/feed?limit=${limit}&offset=${offset}&includes[]=scanlation_group&includes[]=user&order[chapter]=desc&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica&contentRating[]=pornographic`;
 
     const body = await fetchMangaDexJson(feedUrl, providerContext);
     if (!body || !Array.isArray(body.data)) {

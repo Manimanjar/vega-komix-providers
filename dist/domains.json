@@ -1,26 +1,36 @@
 {
-  "updatedAt": "2026-11-14T17:00:00Z",
+  "updatedAt": "2026-11-15T02:00:00Z",
   "domains": {
     "mangadex.org": "mangadex.org",
     "uploads.mangadex.org": "uploads.mangadex.org",
     "api.mangadex.org": "api.mangadex.org",
-    "komixgallery.com": "komixgallery.com",
-    "asuracomic.net": "asuracomic.net"
+    "hentaifox.com": "hentaifox.com",
+    "i3.hentaifox.com": "i3.hentaifox.com",
+    "nhentai.xxx": "nhentai.xxx",
+    "nhentai.net": "nhentai.xxx",
+    "nhentai.to": "nhentai.xxx",
+    "i5.nhentaimg.com": "i5.nhentaimg.com",
+    "manhwa18.com": "manhwa18.com",
+    "manhwa18.net": "manhwa18.com",
+    "min.manhwa18.net": "min.manhwa18.net"
   },
   "mirrors": {
     "mangadex": [
       "https://mangadex.org",
       "https://api.mangadex.org"
     ],
-    "komixGallery": [
-      "https://komixgallery.com",
-      "https://komixgallery.net",
-      "https://komixgallery.org"
+    "hentaifox": [
+      "https://hentaifox.com",
+      "https://hentaifox.tv"
     ],
-    "webtoonManhwa": [
-      "https://asuracomic.net",
-      "https://asuracomics.com",
-      "https://asura.gg"
+    "nhentai": [
+      "https://nhentai.xxx",
+      "https://nhentai.net",
+      "https://nhentai.to"
+    ],
+    "manhwa18": [
+      "https://manhwa18.com",
+      "https://manhwa18.net"
     ]
   }
 }
