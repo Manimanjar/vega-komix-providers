@@ -13,6 +13,31 @@ if (fs.existsSync(envFile)) {
 
 // CLI equivalent of the app's interactive openWebView dialog.
 async function openWebView(url, options = {}) {
+  // On Android or environments without Playwright desktop browsers, use native curl engine
+  if (process.platform === "android" || !process.env.DISPLAY) {
+    const { execSync } = require("child_process");
+    const userAgent =
+      options.headers?.["User-Agent"] ||
+      options.headers?.["user-agent"] ||
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+    try {
+      const html = execSync(
+        `curl -s -L -A "${userAgent}" -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" --max-time 15 "${url}"`,
+        { encoding: "utf8", maxBuffer: 10 * 1024 * 1024 }
+      );
+      return {
+        data: html,
+        cookies: "",
+        cookie: "",
+        cookieMap: {},
+        url,
+        userAgent,
+      };
+    } catch (e) {
+      // Fall through to playwright if curl errors
+    }
+  }
+
   const { chromium } = require("playwright-core");
   const launchOptions = { headless: false };
   const executablePath = process.env.VEGA_BROWSER_PATH?.trim();

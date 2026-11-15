@@ -1,36 +1,49 @@
 {
-  "updatedAt": "2026-11-15T02:00:00Z",
+  "updatedAt": "2026-11-15T04:00:00Z",
   "domains": {
     "mangadex.org": "mangadex.org",
     "uploads.mangadex.org": "uploads.mangadex.org",
     "api.mangadex.org": "api.mangadex.org",
-    "hentaifox.com": "hentaifox.com",
-    "i3.hentaifox.com": "i3.hentaifox.com",
-    "nhentai.xxx": "nhentai.xxx",
-    "nhentai.net": "nhentai.xxx",
-    "nhentai.to": "nhentai.xxx",
-    "i5.nhentaimg.com": "i5.nhentaimg.com",
-    "manhwa18.com": "manhwa18.com",
-    "manhwa18.net": "manhwa18.com",
-    "min.manhwa18.net": "min.manhwa18.net"
+    "komixgallery.com": "komixgallery.com",
+    "asuracomic.net": "asuracomic.net",
+    "8muses.io": "8muses.io",
+    "cdn.8muses.io": "cdn.8muses.io",
+    "allporncomic.com": "allporncomic.com",
+    "allpornmics.com": "allporncomic.com",
+    "cdn.allporncomic.com": "cdn.allporncomic.com",
+    "novelcrow.com": "novelcrow.com",
+    "comicsvalley.com": "comicsvalley.com",
+    "comicsvally.com": "comicsvalley.com"
   },
   "mirrors": {
     "mangadex": [
       "https://mangadex.org",
       "https://api.mangadex.org"
     ],
-    "hentaifox": [
-      "https://hentaifox.com",
-      "https://hentaifox.tv"
+    "komixGallery": [
+      "https://komixgallery.com",
+      "https://komixgallery.net",
+      "https://komixgallery.org"
     ],
-    "nhentai": [
-      "https://nhentai.xxx",
-      "https://nhentai.net",
-      "https://nhentai.to"
+    "webtoonManhwa": [
+      "https://asuracomic.net",
+      "https://asuracomics.com",
+      "https://asura.gg"
     ],
-    "manhwa18": [
-      "https://manhwa18.com",
-      "https://manhwa18.net"
+    "eightMuses": [
+      "https://8muses.io",
+      "https://cdn.8muses.io"
+    ],
+    "allporncomic": [
+      "https://allporncomic.com",
+      "https://cdn.allporncomic.com"
+    ],
+    "novelcrow": [
+      "https://novelcrow.com"
+    ],
+    "comicsvalley": [
+      "https://comicsvalley.com",
+      "https://comicsvally.com"
     ]
   }
 }

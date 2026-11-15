@@ -9,40 +9,13 @@
     "disabled": false
   },
   {
-    "display_name": "HentaiFox (18+)",
-    "value": "hentaifox",
-    "version": "1.0.0",
-    "icon": "https://hentaifox.com/favicon.ico",
-    "type": "comic",
-    "hasSettings": false,
-    "disabled": false
-  },
-  {
-    "display_name": "NHentai (18+)",
-    "value": "nhentai",
-    "version": "1.0.0",
-    "icon": "https://nhentai.xxx/favicon.ico",
-    "type": "comic",
-    "hasSettings": false,
-    "disabled": false
-  },
-  {
-    "display_name": "Manhwa18 (18+)",
-    "value": "manhwa18",
-    "version": "1.0.0",
-    "icon": "https://manhwa18.com/favicon1.ico",
-    "type": "comic",
-    "hasSettings": false,
-    "disabled": false
-  },
-  {
     "display_name": "Komix Gallery",
     "value": "komixGallery",
     "version": "1.0.0",
     "icon": "https://komixgallery.com/favicon.ico",
     "type": "comic",
     "hasSettings": false,
-    "disabled": true
+    "disabled": false
   },
   {
     "display_name": "Webtoon & Manhwa",
@@ -51,6 +24,42 @@
     "icon": "https://asuracomic.net/favicon.ico",
     "type": "comic",
     "hasSettings": false,
-    "disabled": true
+    "disabled": false
+  },
+  {
+    "display_name": "8Muses",
+    "value": "eightMuses",
+    "version": "1.0.0",
+    "icon": "https://8muses.io/favicon.ico",
+    "type": "comic",
+    "hasSettings": false,
+    "disabled": false
+  },
+  {
+    "display_name": "AllPornComic",
+    "value": "allporncomic",
+    "version": "1.0.0",
+    "icon": "https://allporncomic.com/favicon.ico",
+    "type": "comic",
+    "hasSettings": false,
+    "disabled": false
+  },
+  {
+    "display_name": "NovelCrow",
+    "value": "novelcrow",
+    "version": "1.0.0",
+    "icon": "https://novelcrow.com/favicon.ico",
+    "type": "comic",
+    "hasSettings": false,
+    "disabled": false
+  },
+  {
+    "display_name": "ComicsValley",
+    "value": "comicsvalley",
+    "version": "1.0.0",
+    "icon": "https://comicsvalley.com/favicon.ico",
+    "type": "comic",
+    "hasSettings": false,
+    "disabled": false
   }
 ]
