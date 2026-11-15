@@ -150,6 +150,8 @@ export function parseComicsValleyPosts(
       title,
       link: href,
       image,
+      poster: image,
+      cover: image,
       tag: latestChapter || undefined,
       cornerTag: rating ? `${rating}★` : "ComicsValley",
       provider: "comicsvalley",

@@ -35,10 +35,13 @@ export function parse8MusesHtml(
           cover = `${BASE_URL}${cover}`;
         }
 
+        const postImg = cover || `${BASE_URL}/api/legacy-media/${item.id}/cover`;
         posts.push({
           title: item.title,
           link: `${BASE_URL}/g/${item.id}`,
-          image: cover || `${BASE_URL}/api/legacy-media/${item.id}/cover`,
+          image: postImg,
+          poster: postImg,
+          cover: postImg,
           tag: item.pages ? `${item.pages}P` : undefined,
           cornerTag: item.author || "8Muses",
           provider: "eightMuses",
@@ -81,6 +84,8 @@ export function parse8MusesHtml(
         title,
         link: `${BASE_URL}/g/${id}`,
         image: cover,
+        poster: cover,
+        cover: cover,
         provider: "eightMuses",
         cornerTag: "8Muses",
       });

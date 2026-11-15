@@ -31,7 +31,7 @@ function extractCover(mangaId: string, relationships: any[]): string {
   if (!fileName) {
     return "https://mangadex.org/img/cover-placeholder.png";
   }
-  return `${COVERS_BASE}/${mangaId}/${fileName}`;
+  return `${COVERS_BASE}/${mangaId}/${fileName}.512.jpg`;
 }
 
 async function fetchMangaDexJson(
@@ -112,6 +112,7 @@ export async function getMeta({
     title,
     image,
     poster: image,
+    cover: image,
     synopsis,
     imdbId: mangaId,
     type: "comic",

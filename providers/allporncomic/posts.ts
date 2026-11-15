@@ -121,6 +121,8 @@ export function parseMadaraPosts(
       title,
       link: href,
       image,
+      poster: image,
+      cover: image,
       tag: latestChapter || undefined,
       cornerTag: rating ? `${rating}★` : "HD",
       provider: providerValue,

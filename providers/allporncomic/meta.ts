@@ -93,6 +93,7 @@ export async function getMeta({
     title,
     image,
     poster: image,
+    cover: image,
     synopsis,
     imdbId: "",
     type: "comic",

@@ -152,6 +152,8 @@ export function parseNovelCrowPosts(
       title,
       link: href,
       image,
+      poster: image,
+      cover: image,
       tag: latestChapter || undefined,
       cornerTag: rating ? `${rating}★` : "NovelCrow",
       provider: "novelcrow",

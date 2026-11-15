@@ -12,11 +12,14 @@ export interface Post {
   title: string;
   link: string;
   image: string;
+  poster?: string;
+  cover?: string;
   provider?: string;
   aspectRatio?: number | string;
   borderRadius?: number;
   tag?: string;
   cornerTag?: string;
+  [key: string]: any;
 }
 
 export type TextTracks = {
@@ -73,6 +76,7 @@ export interface Info {
   title: string;
   image: string;
   poster?: string;
+  cover?: string;
   logo?: string;
   synopsis: string;
   imdbId: string;
@@ -87,6 +91,7 @@ export interface Info {
   artist?: string;
   status?: string;
   totalChapters?: number;
+  [key: string]: any;
 }
 
 // getEpisodeLinks / getChapters

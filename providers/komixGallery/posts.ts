@@ -106,6 +106,8 @@ function parseGalleryCards(
       title,
       link: fullLink,
       image,
+      poster: image,
+      cover: image,
       provider: providerValue,
       tag,
       aspectRatio: 2 / 3,

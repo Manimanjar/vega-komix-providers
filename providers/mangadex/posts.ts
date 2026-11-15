@@ -39,6 +39,8 @@ function formatPost(item: any, providerValue = "mangadex"): Post {
     title,
     link: mangaId,
     image,
+    poster: image,
+    cover: image,
     provider: providerValue,
     cornerTag: item.attributes?.status
       ? item.attributes.status.toUpperCase()
