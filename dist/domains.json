@@ -13,7 +13,13 @@
     "cdn.allporncomic.com": "cdn.allporncomic.com",
     "novelcrow.com": "novelcrow.com",
     "comicsvalley.com": "comicsvalley.com",
-    "comicsvally.com": "comicsvalley.com"
+    "comicsvally.com": "comicsvalley.com",
+    "hentaiser.com": "hentaiser.app",
+    "api.hentaiser.com": "api.hentaiser.app",
+    "hentaiser.app": "hentaiser.app",
+    "api.hentaiser.app": "api.hentaiser.app",
+    "media.hentaiser.app": "media.hentaiser.app",
+    "app.hentaiser.app": "app.hentaiser.app"
   },
   "mirrors": {
     "mangadex": [
@@ -44,6 +50,11 @@
     "comicsvalley": [
       "https://comicsvalley.com",
       "https://comicsvally.com"
+    ],
+    "hentaiser": [
+      "https://api.hentaiser.app",
+      "https://app.hentaiser.app",
+      "https://media.hentaiser.app"
     ]
   }
 }

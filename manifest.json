@@ -61,5 +61,14 @@
     "type": "comic",
     "hasSettings": false,
     "disabled": false
+  },
+  {
+    "display_name": "Hentaiser",
+    "value": "hentaiser",
+    "version": "1.0.0",
+    "icon": "https://www.hentaiser.app/favicon/favicon-32x32.png",
+    "type": "comic",
+    "hasSettings": false,
+    "disabled": false
   }
 ]
