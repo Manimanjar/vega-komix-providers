@@ -4,20 +4,11 @@ export const BASE_URL = "https://comicsvalley.com";
 
 export const BROWSER_HEADERS = {
   "User-Agent":
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
   Accept:
     "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
   "Accept-Language": "en-US,en;q=0.9",
   Referer: `${BASE_URL}/`,
-  "sec-ch-ua":
-    '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
-  "sec-ch-ua-mobile": "?0",
-  "sec-ch-ua-platform": '"Windows"',
-  "sec-fetch-dest": "document",
-  "sec-fetch-mode": "navigate",
-  "sec-fetch-site": "none",
-  "sec-fetch-user": "?1",
-  "upgrade-insecure-requests": "1",
 };
 
 // Memory cache & Preload store to guarantee 0ms instant loading and resilient search
@@ -33,6 +24,7 @@ export async function fetchWithResilientRetry(
   providerContext: ProviderContext,
   signal?: AbortSignal,
   maxRetries = 3,
+  allowWafDialog = false,
 ): Promise<string> {
   const fullUrl = targetUrl.startsWith("http")
     ? targetUrl
@@ -64,7 +56,7 @@ export async function fetchWithResilientRetry(
         html.includes("Just a moment...") ||
         html.includes("Enable JavaScript and cookies to continue");
 
-      if (isChallenge && providerContext.openWebView) {
+      if (isChallenge && allowWafDialog && providerContext.openWebView) {
         const solved = await providerContext.openWebView(fullUrl, {
           title: "Verifying ComicsValley Access...",
           description: "Please complete the verification challenge to continue.",
@@ -80,7 +72,7 @@ export async function fetchWithResilientRetry(
       lastError = err;
       const status = err?.response?.status;
 
-      if ((status === 403 || status === 503) && providerContext.openWebView) {
+      if ((status === 403 || status === 503) && allowWafDialog && providerContext.openWebView) {
         const solved = await providerContext.openWebView(fullUrl, {
           title: "Solving Cloudflare Verification...",
           description: "Cloudflare challenge detected. Please wait while verification completes.",
@@ -212,7 +204,7 @@ export async function getSearchPosts({
       : `${BASE_URL}/?s=${encodeURIComponent(cleanQuery)}&post_type=wp-manga`;
 
   try {
-    const html = await fetchWithResilientRetry(targetUrl, providerContext, signal, 2);
+    const html = await fetchWithResilientRetry(targetUrl, providerContext, signal, 2, false);
     const results = parseComicsValleyPosts(html, providerContext.cheerio);
     if (results.length > 0) return results;
   } catch (err) {
@@ -238,6 +230,7 @@ export async function getSearchPosts({
       providerContext,
       signal,
       2,
+      false,
     );
     const backupPosts = parseComicsValleyPosts(backupHtml, providerContext.cheerio);
     const filtered = backupPosts.filter((p) =>

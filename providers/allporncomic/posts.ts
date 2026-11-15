@@ -4,20 +4,11 @@ export const BASE_URL = "https://allporncomic.com";
 
 export const BROWSER_HEADERS = {
   "User-Agent":
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
   Accept:
     "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
   "Accept-Language": "en-US,en;q=0.9",
   Referer: `${BASE_URL}/`,
-  "sec-ch-ua":
-    '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
-  "sec-ch-ua-mobile": "?0",
-  "sec-ch-ua-platform": '"Windows"',
-  "sec-fetch-dest": "document",
-  "sec-fetch-mode": "navigate",
-  "sec-fetch-site": "none",
-  "sec-fetch-user": "?1",
-  "upgrade-insecure-requests": "1",
 };
 
 /**
@@ -27,6 +18,7 @@ export async function fetchWithWafFallback(
   targetUrl: string,
   providerContext: ProviderContext,
   signal?: AbortSignal,
+  allowWafDialog = false,
 ): Promise<string> {
   const fullUrl = targetUrl.startsWith("http")
     ? targetUrl
@@ -50,7 +42,7 @@ export async function fetchWithWafFallback(
       html.includes("Just a moment...") ||
       html.includes("Enable JavaScript and cookies to continue");
 
-    if (isChallenge && providerContext.openWebView) {
+    if (isChallenge && allowWafDialog && providerContext.openWebView) {
       const solved = await providerContext.openWebView(fullUrl, {
         title: "Verifying AllPornComic Access...",
         description: "Please complete the verification challenge to continue.",
@@ -62,7 +54,7 @@ export async function fetchWithWafFallback(
     return html;
   } catch (err: any) {
     const status = err?.response?.status;
-    if ((status === 403 || status === 503) && providerContext.openWebView) {
+    if ((status === 403 || status === 503) && allowWafDialog && providerContext.openWebView) {
       const solved = await providerContext.openWebView(fullUrl, {
         title: "Solving Cloudflare Verification...",
         description: "Cloudflare challenge detected. Please wait while verification completes.",
@@ -79,7 +71,17 @@ export async function fetchWithWafFallback(
  */
 export function cleanThumbnailUrl(url: string): string {
   if (!url) return "";
-  return url.replace(/-\d+x\d+(\.[a-zA-Z0-9]+)$/, "$1").trim();
+  const trimmed = url.trim();
+  if (
+    trimmed.includes("dflazy") ||
+    trimmed.includes("1x1") ||
+    trimmed.endsWith(".svg") ||
+    trimmed.includes("spinner") ||
+    trimmed.includes("loading")
+  ) {
+    return "";
+  }
+  return trimmed.replace(/-\d+x\d+(\.[a-zA-Z0-9]+)$/, "$1").trim();
 }
 
 /**
@@ -90,28 +92,48 @@ export function parseMadaraPosts(
   cheerio: ProviderContext["cheerio"],
   providerValue = "allporncomic",
 ): Post[] {
-  const $ = cheerio.load(html);
+  const $ = cheerio.load(html || "");
   const posts: Post[] = [];
   const seenLinks = new Set<string>();
 
   $(".page-item-detail, .c-tabs-item__content, .badge-pos-1").each((_, el) => {
     const titleEl = $(el).find(".post-title a, .item-thumb a").first();
-    const href = titleEl.attr("href");
+    const href = titleEl.attr("href")?.trim();
     const title =
       titleEl.text().trim() ||
-      titleEl.attr("title") ||
-      $(el).find(".item-thumb a").attr("title") ||
+      titleEl.attr("title")?.trim() ||
+      $(el).find(".item-thumb a").attr("title")?.trim() ||
       "";
 
     if (!href || !title || seenLinks.has(href)) return;
     seenLinks.add(href);
 
     const imgEl = $(el).find(".item-thumb img, img").first();
-    const rawImg =
+    let rawImg = (
       imgEl.attr("data-src") ||
+      imgEl.attr("data-lazy-src") ||
       imgEl.attr("data-original") ||
-      imgEl.attr("src") ||
-      "";
+      imgEl.attr("data-full-url") ||
+      ""
+    ).trim();
+
+    // Check srcset or data-srcset fallback if data-src missing
+    if (!rawImg || rawImg.includes("dflazy")) {
+      const srcset = (imgEl.attr("data-srcset") || imgEl.attr("srcset") || "").trim();
+      if (srcset) {
+        const firstCandidate = srcset.split(",")[0]?.trim()?.split(" ")[0]?.trim();
+        if (firstCandidate && !firstCandidate.includes("dflazy")) {
+          rawImg = firstCandidate;
+        }
+      }
+    }
+    if (!rawImg || rawImg.includes("dflazy")) {
+      const src = (imgEl.attr("src") || "").trim();
+      if (src && !src.includes("dflazy")) rawImg = src;
+    }
+
+    if (rawImg.startsWith("//")) rawImg = `https:${rawImg}`;
+    else if (rawImg.startsWith("/")) rawImg = `${BASE_URL}${rawImg}`;
 
     const image = cleanThumbnailUrl(rawImg);
     const latestChapter = $(el).find(".list-chapter .chapter-item a").first().text().trim();
@@ -119,7 +141,7 @@ export function parseMadaraPosts(
 
     posts.push({
       title,
-      link: href,
+      link: href.startsWith("http") ? href : `${BASE_URL}${href.startsWith("/") ? "" : "/"}${href}`,
       image,
       poster: image,
       cover: image,
@@ -158,7 +180,7 @@ export async function getPosts({
     targetUrl = `${BASE_URL}${baseFilter.startsWith("/") ? "" : "/"}${baseFilter}`;
   }
 
-  const html = await fetchWithWafFallback(targetUrl, providerContext, signal);
+  const html = await fetchWithWafFallback(targetUrl, providerContext, signal, false);
   return parseMadaraPosts(html, providerContext.cheerio, "allporncomic");
 }
 
@@ -184,6 +206,11 @@ export async function getSearchPosts({
           searchQuery.trim(),
         )}&post_type=wp-manga`;
 
-  const html = await fetchWithWafFallback(targetUrl, providerContext, signal);
-  return parseMadaraPosts(html, providerContext.cheerio, "allporncomic");
+  try {
+    const html = await fetchWithWafFallback(targetUrl, providerContext, signal, false);
+    return parseMadaraPosts(html, providerContext.cheerio, "allporncomic");
+  } catch (err) {
+    console.warn("[AllPornComic] Non-fatal search error (silenced background popup):", err);
+    return [];
+  }
 }

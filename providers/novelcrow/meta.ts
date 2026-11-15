@@ -8,7 +8,7 @@ export async function getMeta({
   link: string;
   providerContext: ProviderContext;
 }): Promise<Info> {
-  const html = await fetchWithResilientRetry(link, providerContext);
+  const html = await fetchWithResilientRetry(link, providerContext, undefined, 3, false);
   const $ = providerContext.cheerio.load(html || "<html><body></body></html>");
 
   const title =
