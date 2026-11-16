@@ -96,4 +96,6 @@ export function cleanHighResImageUrl(url: string): string {
   return clean.trim();
 }
 
-export const cleanThumbnailUrl = cleanHighResImageUrl;
+export function cleanThumbnailUrl(url: string): string {
+  return cleanHighResImageUrl(url);
+}

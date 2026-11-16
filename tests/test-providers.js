@@ -11,6 +11,11 @@ function pickRandom(arr, count = 1) {
   return count === 1 ? shuffled[0] : shuffled.slice(0, count);
 }
 
+function pickRandomItems(arr, count = 1) {
+  const shuffled = [...arr].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, Math.max(1, count));
+}
+
 /**
  * Sleep helper
  */
@@ -181,7 +186,7 @@ class ProviderTester {
       console.log(`   ✅ Got ${posts.length} posts`);
 
       // Pick random posts to test
-      const postsToTest = pickRandom(
+      const postsToTest = pickRandomItems(
         posts,
         Math.min(this.postsToTest, posts.length),
       );
@@ -356,7 +361,7 @@ class ProviderTester {
         console.log(`\n   🎬 Found ${directLinks.length} direct link entries`);
 
         const testDirectLink = pickRandom(directLinks);
-        const linksToTest = pickRandom(
+        const linksToTest = pickRandomItems(
           testDirectLink.link.directLinks,
           Math.min(this.linksToTest, testDirectLink.link.directLinks.length),
         );

@@ -104,7 +104,8 @@ export async function fetchWithResilientRetry(
 
   throw lastError;
 }
-export { cleanHighResImageUrl, cleanThumbnailUrl } from "../cleanImage";
+import { cleanHighResImageUrl, cleanThumbnailUrl } from "../cleanImage";
+export { cleanHighResImageUrl, cleanThumbnailUrl };
 
 export function parseNovelCrowPosts(
   html: string,

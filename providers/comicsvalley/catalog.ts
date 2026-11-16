@@ -23,7 +23,7 @@ export const catalog: CatalogList = [
   },
   {
     title: "Latest Releases",
-    filter: "/",
+    filter: "/comic-genre/3d/",
   },
 ];
 

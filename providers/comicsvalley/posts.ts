@@ -101,7 +101,8 @@ export async function fetchWithResilientRetry(
 
   throw lastError;
 }
-export { cleanHighResImageUrl, cleanThumbnailUrl } from "../cleanImage";
+import { cleanHighResImageUrl, cleanThumbnailUrl } from "../cleanImage";
+export { cleanHighResImageUrl, cleanThumbnailUrl };
 
 export function parseComicsValleyPosts(
   html: string,
@@ -163,7 +164,7 @@ export async function getPosts({
   signal?: AbortSignal;
   providerContext: ProviderContext;
 }): Promise<Post[]> {
-  const baseFilter = filter || "/comic-genre/3d/";
+  const baseFilter = (!filter || filter === "/") ? "/comic-genre/3d/" : filter;
   let targetUrl: string;
 
   if (page > 1) {

@@ -66,7 +66,8 @@ export async function fetchWithWafFallback(
   }
 }
 
-export { cleanHighResImageUrl, cleanThumbnailUrl } from "../cleanImage";
+import { cleanHighResImageUrl, cleanThumbnailUrl } from "../cleanImage";
+export { cleanHighResImageUrl, cleanThumbnailUrl };
 
 /**
  * Parse Madara WordPress comic cards
