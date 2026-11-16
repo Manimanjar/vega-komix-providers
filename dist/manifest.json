@@ -27,28 +27,64 @@
     "disabled": false
   },
   {
-    "display_name": "NovelCrow",
-    "value": "novelcrow",
-    "version": "1.1.0",
-    "icon": "https://novelcrow.com/favicon.ico",
-    "type": "comic",
-    "hasSettings": false,
-    "disabled": false
-  },
-  {
-    "display_name": "ComicsValley",
-    "value": "comicsvalley",
-    "version": "1.1.0",
-    "icon": "https://comicsvalley.com/favicon.ico",
-    "type": "comic",
-    "hasSettings": false,
-    "disabled": false
-  },
-  {
     "display_name": "Hentaiser",
     "value": "hentaiser",
     "version": "1.1.0",
     "icon": "https://www.hentaiser.app/favicon/favicon-32x32.png",
+    "type": "comic",
+    "hasSettings": false,
+    "disabled": false
+  },
+  {
+    "display_name": "nHentai",
+    "value": "nhentai",
+    "version": "1.1.0",
+    "icon": "https://nhentai.net/favicon.ico",
+    "type": "comic",
+    "hasSettings": false,
+    "disabled": false
+  },
+  {
+    "display_name": "HentaiFox",
+    "value": "hentaifox",
+    "version": "1.1.0",
+    "icon": "https://hentaifox.com/favicon.ico",
+    "type": "comic",
+    "hasSettings": false,
+    "disabled": false
+  },
+  {
+    "display_name": "HDPornComics",
+    "value": "hdporncomics",
+    "version": "1.1.0",
+    "icon": "https://hdporncomics.com/favicon.ico",
+    "type": "comic",
+    "hasSettings": false,
+    "disabled": false
+  },
+  {
+    "display_name": "MultPorn",
+    "value": "multporn",
+    "version": "1.1.0",
+    "icon": "https://multporn.net/favicon.ico",
+    "type": "comic",
+    "hasSettings": false,
+    "disabled": false
+  },
+  {
+    "display_name": "KingComix",
+    "value": "kingcomix",
+    "version": "1.1.0",
+    "icon": "https://kingcomix.com/favicon.ico",
+    "type": "comic",
+    "hasSettings": false,
+    "disabled": false
+  },
+  {
+    "display_name": "E-Hentai (Western & Doujinshi)",
+    "value": "ehentai",
+    "version": "1.1.0",
+    "icon": "https://e-hentai.org/favicon.ico",
     "type": "comic",
     "hasSettings": false,
     "disabled": false

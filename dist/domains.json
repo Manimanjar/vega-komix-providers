@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-15T10:00:00Z",
+  "updatedAt": "2026-11-16T06:48:26.511Z",
   "domains": {
     "mangadex.org": "mangadex.org",
     "uploads.mangadex.org": "uploads.mangadex.org",
@@ -9,15 +9,18 @@
     "allporncomic.com": "allporncomic.com",
     "allpornmics.com": "allporncomic.com",
     "cdn.allporncomic.com": "cdn.allporncomic.com",
-    "novelcrow.com": "novelcrow.com",
-    "comicsvalley.com": "comicsvalley.com",
-    "comicsvally.com": "comicsvalley.com",
     "hentaiser.com": "hentaiser.app",
     "api.hentaiser.com": "api.hentaiser.app",
     "hentaiser.app": "hentaiser.app",
     "api.hentaiser.app": "api.hentaiser.app",
     "media.hentaiser.app": "media.hentaiser.app",
-    "app.hentaiser.app": "app.hentaiser.app"
+    "app.hentaiser.app": "app.hentaiser.app",
+    "nhentai.net": "nhentai.net",
+    "hentaifox.com": "hentaifox.com",
+    "hdporncomics.com": "hdporncomics.com",
+    "multporn.net": "multporn.net",
+    "kingcomix.com": "kingcomix.com",
+    "e-hentai.org": "e-hentai.org"
   },
   "mirrors": {
     "mangadex": [
@@ -32,17 +35,30 @@
       "https://allporncomic.com",
       "https://cdn.allporncomic.com"
     ],
-    "novelcrow": [
-      "https://novelcrow.com"
-    ],
-    "comicsvalley": [
-      "https://comicsvalley.com",
-      "https://comicsvally.com"
-    ],
     "hentaiser": [
       "https://api.hentaiser.app",
       "https://app.hentaiser.app",
       "https://media.hentaiser.app"
+    ],
+    "nhentai": [
+      "https://nhentai.net",
+      "https://nhentai.to",
+      "https://nhentai.xxx"
+    ],
+    "hentaifox": [
+      "https://hentaifox.com"
+    ],
+    "hdporncomics": [
+      "https://hdporncomics.com"
+    ],
+    "multporn": [
+      "https://multporn.net"
+    ],
+    "kingcomix": [
+      "https://kingcomix.com"
+    ],
+    "ehentai": [
+      "https://e-hentai.org"
     ]
   }
 }
