@@ -7,6 +7,61 @@ const COMMON_HEADERS = {
   Referer: "https://hentaifox.com/",
 };
 
+// The site added a category badge link (<a class="t_cat" href="/category/...">)
+// as the FIRST anchor inside every .thumb, so taking the first <a> returns a
+// category page instead of the gallery. The gallery link is always the anchor
+// whose href starts with /gallery/.
+function parseThumbs($: any): Post[] {
+  const posts: Post[] = [];
+  $(".lc_galleries .thumb, .overview .thumb").each((_, el) => {
+    const $el = $(el);
+    const a =
+      $el.find('a[href^="/gallery/"]').first().length > 0
+        ? $el.find('a[href^="/gallery/"]').first()
+        : $el.find(".inner_thumb a").first();
+    const href = a.attr("href");
+    if (!href) return;
+    const title =
+      $el.find(".caption .g_title a").first().text().trim() ||
+      $el.find("h2 a").first().text().trim() ||
+      "Untitled";
+    const img = $el.find("img").first();
+    let cover = img.attr("data-src") || img.attr("src") || "";
+    if (cover.startsWith("//")) cover = "https:" + cover;
+    else if (cover.startsWith("/")) cover = `${BASE_URL}${cover}`;
+
+    const fullLink = href.startsWith("http") ? href : `${BASE_URL}${href.startsWith("/") ? "" : "/"}${href}`;
+    posts.push({
+      title,
+      link: fullLink,
+      image: cover,
+      poster: cover,
+      cover,
+      provider: "hentaifox",
+    });
+  });
+  return posts;
+}
+
+async function fetchList(
+  url: string,
+  signal: AbortSignal | undefined,
+  providerContext: ProviderContext,
+): Promise<Post[]> {
+  const res = await providerContext.axios.get(url, {
+    headers: { ...providerContext.commonHeaders, ...COMMON_HEADERS },
+    signal,
+    timeout: 15000,
+  });
+  const $ = providerContext.cheerio.load(res.data);
+  return parseThumbs($);
+}
+
+function listUrl(pathPart: string, page: number): string {
+  const p = pathPart.endsWith("/") ? pathPart : `${pathPart}/`;
+  return page > 1 ? `${BASE_URL}${p}pag/${page}/` : `${BASE_URL}${p}`;
+}
+
 export async function getPosts({
   page = 1,
   filter = "/",
@@ -18,40 +73,26 @@ export async function getPosts({
   signal?: AbortSignal;
   providerContext: ProviderContext;
 }): Promise<Post[]> {
-  const pathPart = filter.endsWith("/") ? filter : `${filter}/`;
-  const url = page > 1 ? `${BASE_URL}${pathPart}pag/${page}/` : `${BASE_URL}${pathPart}`;
-
   try {
-    const res = await providerContext.axios.get(url, {
-      headers: { ...providerContext.commonHeaders, ...COMMON_HEADERS },
-      signal,
-      timeout: 15000,
-    });
-    const $ = providerContext.cheerio.load(res.data);
-    const posts: Post[] = [];
-
-    $(".lc_galleries .thumb, .overview .thumb").each((_, el) => {
-      const a = $(el).find(".inner_thumb a, a").first();
-      const href = a.attr("href");
-      if (!href) return;
-      const title = $(el).find(".caption .g_title a, h2 a, .caption a").first().text().trim() || "Untitled";
-      const img = $(el).find("img").first();
-      let cover = img.attr("data-src") || img.attr("src") || "";
-      if (cover.startsWith("//")) cover = "https:" + cover;
-      else if (cover.startsWith("/")) cover = `${BASE_URL}${cover}`;
-
-      const fullLink = href.startsWith("http") ? href : `${BASE_URL}${href.startsWith("/") ? "" : "/"}${href}`;
-      posts.push({
-        title,
-        link: fullLink,
-        image: cover,
-        poster: cover,
-        cover,
-        provider: "hentaifox",
-      });
-    });
-
-    return posts;
+    // "multi:/tag/mother/|/tag/sister/" merges several tag pages (used for
+    // Family: the site has no single "family" tag, only mother/sister/brother/father).
+    if (filter.startsWith("multi:")) {
+      const parts = filter.slice(6).split("|").map((s) => s.trim()).filter(Boolean);
+      const seen = new Set<string>();
+      const merged: Post[] = [];
+      for (const part of parts) {
+        const posts = await fetchList(listUrl(part, page), signal, providerContext);
+        for (const post of posts) {
+          if (!seen.has(post.link)) {
+            seen.add(post.link);
+            merged.push(post);
+          }
+        }
+        if (merged.length >= 60) break;
+      }
+      return merged.slice(0, 60);
+    }
+    return await fetchList(listUrl(filter, page), signal, providerContext);
   } catch {
     return [];
   }
@@ -72,38 +113,8 @@ export async function getSearchPosts({
   const url = page > 1
     ? `${BASE_URL}/search/pag/${page}/?q=${encodeURIComponent(searchQuery.trim())}`
     : `${BASE_URL}/search/?q=${encodeURIComponent(searchQuery.trim())}`;
-
   try {
-    const res = await providerContext.axios.get(url, {
-      headers: { ...providerContext.commonHeaders, ...COMMON_HEADERS },
-      signal,
-      timeout: 15000,
-    });
-    const $ = providerContext.cheerio.load(res.data);
-    const posts: Post[] = [];
-
-    $(".lc_galleries .thumb, .overview .thumb").each((_, el) => {
-      const a = $(el).find(".inner_thumb a, a").first();
-      const href = a.attr("href");
-      if (!href) return;
-      const title = $(el).find(".caption .g_title a, h2 a, .caption a").first().text().trim() || "Untitled";
-      const img = $(el).find("img").first();
-      let cover = img.attr("data-src") || img.attr("src") || "";
-      if (cover.startsWith("//")) cover = "https:" + cover;
-      else if (cover.startsWith("/")) cover = `${BASE_URL}${cover}`;
-
-      const fullLink = href.startsWith("http") ? href : `${BASE_URL}${href.startsWith("/") ? "" : "/"}${href}`;
-      posts.push({
-        title,
-        link: fullLink,
-        image: cover,
-        poster: cover,
-        cover,
-        provider: "hentaifox",
-      });
-    });
-
-    return posts;
+    return await fetchList(url, signal, providerContext);
   } catch {
     return [];
   }

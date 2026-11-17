@@ -23,14 +23,17 @@ export async function getStream({
   });
 
   const html = res.data;
-  const xmlMatch = html.match(/configUrl\s*[:=]\s*["']([^"']+)["']/i) ||
-                   html.match(/["'](\/juicebox\/xml\/field\/node\/\d+\/field_images\/full[^"']*)["']/i);
+  // The configUrl sits in a JSON settings blob: "configUrl":"\/juicebox\/xml\/field\/node\/40498\/field_com_pages\/full?checksum=..."
+  // Note the closing quote after the key and the escaped slashes (\/).
+  const xmlMatch = html.match(/configUrl["']?\s*[:=]\s*["']([^"']+)["']/i) ||
+                   html.match(/["']((?:\\?\/juicebox\\?\/xml\\?\/field\\?\/node\\?\/\d+\\?\/field_\w+\\?\/full[^"']*))["']/i);
 
   const pages: any[] = [];
   const seen = new Set<string>();
 
   if (xmlMatch) {
-    const xmlPath = xmlMatch[1];
+    // Unescape the JSON-escaped slashes or the XML request 404s and no pages load.
+    const xmlPath = xmlMatch[1].replace(/\\\//g, "/");
     const xmlUrl = xmlPath.startsWith("http") ? xmlPath : `${BASE_URL}${xmlPath.startsWith("/") ? "" : "/"}${xmlPath}`;
     try {
       const xmlRes = await providerContext.axios.get(xmlUrl, {

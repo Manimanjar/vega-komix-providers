@@ -10,6 +10,14 @@ export const catalog: CatalogList = [
     filter: "/new",
   },
   {
+    title: "Incest",
+    filter: "/tag/incest",
+  },
+  {
+    title: "Family",
+    filter: "/tag/family",
+  },
+  {
     title: "Top Rated",
     filter: "/top",
   },
@@ -42,7 +50,9 @@ export const genres: CatalogList = [
   },
   {
     title: "Incest",
-    filter: "/genres?genre=Incest",
+    // The old /genres?genre=Incest URL returns an empty page; the working
+    // incest listing is the tag page.
+    filter: "/tag/incest",
   },
   {
     title: "Cheating",

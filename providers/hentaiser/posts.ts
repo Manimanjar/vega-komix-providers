@@ -22,6 +22,26 @@ export async function getPosts({
   signal?: AbortSignal;
   providerContext: ProviderContext;
 }): Promise<Post[]> {
+  // "multi:tags=mother|tags=sister" fetches several queries and merges them
+  // (used for Family: the API's comma syntax is AND, so a single
+  // tags=mother,sister,brother,father query returns only ~12 books that carry
+  // all four tags; merging the four single-tag lists gives a full row).
+  if ((filter || "").startsWith("multi:")) {
+    const parts = filter.slice(6).split("|").map((s) => s.trim()).filter(Boolean);
+    const seen = new Set<string>();
+    const merged: Post[] = [];
+    for (const part of parts) {
+      const posts = await getPosts({ page, filter: part, signal, providerContext });
+      for (const post of posts) {
+        if (!seen.has(post.link)) {
+          seen.add(post.link);
+          merged.push(post);
+        }
+      }
+      if (merged.length >= 72) break;
+    }
+    return merged.slice(0, 72);
+  }
   const queryParam = filter || "sort=views";
   const url = `${BASE_API}/books?${queryParam}&page=${page}`;
 

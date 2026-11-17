@@ -1,5 +1,5 @@
 import { Info, ProviderContext } from "../types";
-import { BASE_URL, API_URL } from "./posts";
+import { BASE_URL, API_URL, decodeEntities } from "./posts";
 
 export async function getMeta({
   link,
@@ -34,7 +34,7 @@ export async function getMeta({
 
       const gdata = apiRes.data?.gmetadata?.[0];
       if (gdata) {
-        title = gdata.title || gdata.title_jpn || title;
+        title = decodeEntities(gdata.title || gdata.title_jpn || title);
         image = gdata.thumb || image;
         if (Array.isArray(gdata.tags) && gdata.tags.length > 0) {
           tags = gdata.tags;
@@ -56,7 +56,7 @@ export async function getMeta({
         timeout: 15000,
       });
       const $ = providerContext.cheerio.load(htmlRes.data);
-      title = $("#gn").text().trim() || $("#gj").text().trim() || title;
+      title = decodeEntities($("#gn").text().trim() || $("#gj").text().trim() || title);
       const imgStyle = $("#gd1 div").attr("style") || "";
       const bgMatch = imgStyle.match(/url\(([^)]+)\)/);
       if (bgMatch) image = bgMatch[1].replace(/['"]/g, "");

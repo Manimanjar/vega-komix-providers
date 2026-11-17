@@ -50,7 +50,12 @@ export function parse8MusesHtml(
     } catch {}
   }
 
-  // 2. Secondary Strategy: Cheerio DOM fallback
+  // 2. Secondary Strategy: Cheerio DOM fallback (used by tag pages and
+  // search, which embed no Next.js JSON state). A card is
+  // <a class="grid-card" href="/g/{id}"> with the clean title in a <strong>
+  // and the cover in <img class="cover__image">. Do NOT use the anchor's
+  // full text: it includes decorative badge letters ("T" + "NEW") from the
+  // cover spans.
   if (posts.length === 0) {
     const $ = cheerio.load(html);
     $('a[href^="/g/"]').each((_, el) => {
@@ -63,9 +68,10 @@ export function parse8MusesHtml(
       seenIds.add(id);
 
       const title =
-        $(el).find(".title, h3, h4, p").text().trim() ||
+        $(el).find("strong").first().text().trim() ||
+        ($(el).find(".cover").attr("aria-label") || "").replace(/\s+cover\s*$/i, "").trim() ||
+        $(el).find("img").first().attr("alt") ||
         $(el).attr("title") ||
-        $(el).text().trim() ||
         `Comic #${id}`;
 
       const rawImg =

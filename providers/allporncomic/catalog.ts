@@ -10,6 +10,17 @@ export const catalog: CatalogList = [
     filter: "/porncomic/?m_orderby=latest",
   },
   {
+    title: "Incest",
+    filter: "/porncomic-genre/incest/",
+  },
+  {
+    title: "Family",
+    // Same genre taxonomy as the existing Incest genre; the site is behind
+    // Cloudflare from here so this slug could not be verified live — it needs
+    // one check on the phone after the WAF challenge is solved.
+    filter: "/porncomic-genre/family/",
+  },
+  {
     title: "Top Rated",
     filter: "/porncomic/?m_orderby=rating",
   },

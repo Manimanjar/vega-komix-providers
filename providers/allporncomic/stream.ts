@@ -12,7 +12,7 @@ export async function getStream({
   providerContext: ProviderContext;
   isDownload?: boolean;
 }): Promise<any[]> {
-  const html = await fetchWithWafFallback(link, providerContext, signal);
+  const html = await fetchWithWafFallback(link, providerContext, signal, true);
   const $ = providerContext.cheerio.load(html);
 
   const pages: PageImage[] = [];

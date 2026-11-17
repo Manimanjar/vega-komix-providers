@@ -8,7 +8,7 @@ export async function getMeta({
   link: string;
   providerContext: ProviderContext;
 }): Promise<Info> {
-  const html = await fetchWithWafFallback(link, providerContext);
+  const html = await fetchWithWafFallback(link, providerContext, undefined, true);
   const $ = providerContext.cheerio.load(html);
 
   const title =
