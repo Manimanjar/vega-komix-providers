@@ -7,14 +7,27 @@ const COMMON_HEADERS = {
   Referer: "https://multporn.net/",
 };
 
-// Listings come in two layouts: /new uses masonry .views-row cards, while
-// /comics, /games and /hentai_manga use a <table class="views-view-grid">
+// Listings come in two layouts: /new and search use masonry .views-row cards,
+// while /comics, /games and /hentai_manga use a <table class="views-view-grid">
 // grid whose cells hold a <strong><a> title and an <a><img> cover. Parse both.
+//
+// Two traps found live (2026-11-18):
+// - Search results mix real comics with artist pages (/user_content/, /authors_comics/),
+//   category pages (/category*, /category_gay/, /category_hentai/), tag pages (/user_tags/)
+//   and games (/games/) — those rows have no cover and no readable pages, so they
+//   show up in the app as blank thumbnails that error on open. Only /comics/ and
+//   /hentai_manga/ links are real comics; everything else is skipped in push().
+// - /comics and /hentai_manga themselves are A-Z series indexes: every cell links
+//   to a series page, not a comic, so tapping any of them returned 0 pages.
+//   fetchIndexComics() opens each series page and lists the real comics inside.
 function parseCards($: any): Post[] {
   const posts: Post[] = [];
   const seen = new Set<string>();
   const push = (title: string, href: string, cover: string) => {
     if (!href || seen.has(href)) return;
+    // Real comics live only under /comics/ and /hentai_manga/. Artist, category,
+    // tag, game and /mp… links are listing pages, not comics — skip them.
+    if (!/^\/(comics|hentai_manga)\//.test(href)) return;
     const fullLink = href.startsWith("http") ? href : `${BASE_URL}${href.startsWith("/") ? "" : "/"}${href}`;
     seen.add(fullLink);
     let img = cover;
@@ -78,6 +91,55 @@ function searchUrl(q: string, page: number): string {
     : `${BASE_URL}/search?search_api_views_fulltext=${encodeURIComponent(q)}`;
 }
 
+// /comics and /hentai_manga are A-Z series indexes, not comic lists. Open every
+// series page on the index and merge the real comics inside (parallel, capped).
+async function fetchIndexComics(
+  indexPath: string,
+  page: number,
+  signal: AbortSignal | undefined,
+  providerContext: ProviderContext,
+): Promise<Post[]> {
+  const indexUrl =
+    page > 1 ? `${BASE_URL}${indexPath}?page=${page - 1}` : `${BASE_URL}${indexPath}`;
+  const indexRes = await providerContext.axios.get(indexUrl, {
+    headers: { ...providerContext.commonHeaders, ...COMMON_HEADERS },
+    signal,
+    timeout: 15000,
+  });
+  const $index = providerContext.cheerio.load(indexRes.data);
+  const seriesHrefs: string[] = [];
+  $index("table.views-view-grid td").each((_, el) => {
+    const href = $index(el).find("strong a").first().attr("href")
+      || $index(el).find("a").first().attr("href")
+      || "";
+    if (href) seriesHrefs.push(href);
+  });
+  const merged: Post[] = [];
+  const seen = new Set<string>();
+  const results = await Promise.allSettled(
+    seriesHrefs.map(async (href) => {
+      const url = href.startsWith("http") ? href : `${BASE_URL}${href.startsWith("/") ? "" : "/"}${href}`;
+      const res = await providerContext.axios.get(url, {
+        headers: { ...providerContext.commonHeaders, ...COMMON_HEADERS },
+        signal,
+        timeout: 15000,
+      });
+      return parseCards(providerContext.cheerio.load(res.data));
+    }),
+  );
+  for (const r of results) {
+    if (r.status !== "fulfilled") continue;
+    for (const post of r.value) {
+      if (!seen.has(post.link)) {
+        seen.add(post.link);
+        merged.push(post);
+      }
+    }
+    if (merged.length >= 60) break;
+  }
+  return merged.slice(0, 60);
+}
+
 export async function getPosts({
   page = 1,
   filter = "/new",
@@ -92,6 +154,10 @@ export async function getPosts({
   try {
     if (filter.startsWith("search:")) {
       return await fetchList(searchUrl(filter.slice(7).trim(), page), signal, providerContext, 25000);
+    }
+    // /comics and /hentai_manga are series indexes — expand them into real comics.
+    if (filter === "/comics" || filter === "/hentai_manga") {
+      return await fetchIndexComics(filter, page, signal, providerContext);
     }
     const url = page > 1
       ? `${BASE_URL}${filter}?page=${page - 1}`
