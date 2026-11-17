@@ -19,19 +19,27 @@ export async function getMeta({
   });
 
   const $ = providerContext.cheerio.load(res.data);
-  const title = $("h1.entry-title, h1").first().text().trim() || "Comic";
-  const imgEl = $(".post-thumbnail img, .entry-content img, article img").first();
+  // The site appends " comic porn" to every h1 (e.g. "Chica ... comic porn");
+  // strip that suffix for a clean display title.
+  const title = ($("h1.entry-title, h1").first().text().trim() || "Comic").replace(/\s+comic porn\s*$/i, "");
+  // Cover: the comic page's first gallery thumbnail (entry-content has no
+  // images on this site; the gallery figures hold the thumbs).
+  const imgEl = $(".my-gallery figure img, article img, .post-thumbnail img").first();
   let image = imgEl.attr("data-src") || imgEl.attr("data-lazy-src") || imgEl.attr("src") || "";
   if (image.startsWith("//")) image = "https:" + image;
   else if (image.startsWith("/")) image = `${BASE_URL}${image}`;
-
-  const synopsis = $(".entry-content p, .synopsis").first().text().trim() || `Read ${title} online.`;
 
   const tags: string[] = [];
   $('a[rel="tag"], .post-tags a').each((_, el) => {
     const t = $(el).text().trim();
     if (t) tags.push(t);
   });
+
+  // Comic pages carry no written description; build the synopsis from the tags.
+  const synopsis =
+    tags.length > 0
+      ? `${title} — ${tags.slice(0, 12).join(", ")}.`
+      : `Read ${title} online.`;
 
   // Check multi-chapter listing if any
   const chapterLinks: any[] = [];

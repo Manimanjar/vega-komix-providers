@@ -27,7 +27,10 @@ export async function getMeta({
 
   const tags: string[] = [];
   $(".tag_list li a, .tag_btn").each((_, el) => {
-    const t = $(el).text().trim();
+    // .tag_btn contains a count badge span ("webtoon 2094"); strip it so the
+    // tag is just the name.
+    const $el = $(el);
+    const t = $el.clone().find(".t_badge").remove().end().text().trim();
     if (t) tags.push(t);
   });
 

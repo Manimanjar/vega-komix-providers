@@ -54,7 +54,11 @@ export async function fetchWithWafFallback(
     return html;
   } catch (err: any) {
     const status = err?.response?.status;
-    if ((status === 403 || status === 503) && allowWafDialog && providerContext.openWebView) {
+    // Cloudflare also just drops connections (socket hang up / reset, no
+    // response at all) for blocked networks — treat a response-less failure
+    // as a possible WAF block too, so the WebView gets a chance to solve it.
+    const noResponse = !err?.response;
+    if ((status === 403 || status === 503 || noResponse) && allowWafDialog && providerContext.openWebView) {
       const solved = await providerContext.openWebView(fullUrl, {
         title: "Solving Cloudflare Verification...",
         description: "Cloudflare challenge detected. Please wait while verification completes.",
@@ -165,7 +169,12 @@ export async function getPosts({
     targetUrl = `${BASE_URL}${baseFilter.startsWith("/") ? "" : "/"}${baseFilter}`;
   }
 
-  const html = await fetchWithWafFallback(targetUrl, providerContext, signal, false);
+  // Cloudflare blocks this site's API for many networks (403 on every
+  // request). The app's WAF WebView solves the challenge once (with the
+  // user's consent) and the cookies persist, so listings load after that.
+  // allowWafDialog was false here (and in meta/stream) which left the
+  // provider permanently dead whenever Cloudflare challenged.
+  const html = await fetchWithWafFallback(targetUrl, providerContext, signal, true);
   return parseMadaraPosts(html, providerContext.cheerio, "allporncomic");
 }
 
@@ -192,7 +201,7 @@ export async function getSearchPosts({
         )}&post_type=wp-manga`;
 
   try {
-    const html = await fetchWithWafFallback(targetUrl, providerContext, signal, false);
+    const html = await fetchWithWafFallback(targetUrl, providerContext, signal, true);
     return parseMadaraPosts(html, providerContext.cheerio, "allporncomic");
   } catch (err) {
     console.warn("[AllPornComic] Non-fatal search error (silenced background popup):", err);

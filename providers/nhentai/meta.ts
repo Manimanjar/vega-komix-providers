@@ -1,5 +1,11 @@
 import { Info, ProviderContext } from "../types";
-import { BASE_URL } from "./posts";
+import { API_V2, BASE_URL, THUMB_HOST } from "./posts";
+
+const COMMON_HEADERS = {
+  "User-Agent": "Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
+  Accept: "application/json, text/html, */*",
+  Referer: "https://nhentai.net/",
+};
 
 export async function getMeta({
   link,
@@ -11,37 +17,45 @@ export async function getMeta({
   const fullUrl = link.startsWith("http") ? link : `${BASE_URL}${link.startsWith("/") ? "" : "/"}${link}`;
   const idMatch = fullUrl.match(/\/g\/(\d+)/);
   const id = idMatch ? idMatch[1] : "";
-  const apiUrl = `${BASE_URL}/api/gallery/${id}`;
 
-  const res = await providerContext.axios.get(apiUrl, {
-    headers: {
-      "User-Agent": "Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
-      Accept: "application/json, text/html, */*",
-      Referer: `${BASE_URL}/`,
-    },
-    timeout: 15000,
+  const res = await providerContext.axios.get(`${API_V2}/galleries/${id}`, {
+    headers: { ...providerContext.commonHeaders, ...COMMON_HEADERS },
+    timeout: 20000,
   });
-
   const data = typeof res.data === "string" ? JSON.parse(res.data) : res.data;
-  const title = data.title?.pretty || data.title?.english || data.title?.japanese || `Gallery #${id}`;
-  const ext = data.images?.cover?.t === "p" ? "png" : data.images?.cover?.t === "w" ? "webp" : "jpg";
-  const image = data.media_id ? `https://t3.nhentai.net/galleries/${data.media_id}/cover.${ext}` : "";
+  if (data?.error) throw new Error(`nhentai v2: ${data.error}`);
+
+  const title =
+    data.title?.pretty || data.title?.english || data.title?.japanese || `Gallery #${id}`;
+  const coverPath =
+    typeof data.cover === "string" ? data.cover : data.cover?.path || data.thumbnail?.path || "";
+  const image = coverPath ? `${THUMB_HOST}/${coverPath.replace(/^\/+/, "")}` : "";
 
   const tags: string[] = Array.isArray(data.tags)
     ? data.tags.map((t: any) => t.name).filter(Boolean)
-    : ["Doujinshi", "Manga"];
+    : [];
+  const artists: string[] = Array.isArray(data.tags)
+    ? data.tags.filter((t: any) => t.type === "artist").map((t: any) => t.name)
+    : [];
+  const parodies: string[] = Array.isArray(data.tags)
+    ? data.tags.filter((t: any) => t.type === "parody").map((t: any) => t.name)
+    : [];
+  const numPages = data.num_pages || (Array.isArray(data.pages) ? data.pages.length : 1);
 
-  const numPages = data.num_pages || (Array.isArray(data.images?.pages) ? data.images.pages.length : 1);
+  const synopsisParts = [`Doujinshi gallery containing ${numPages} pages.`];
+  if (artists.length) synopsisParts.push(`Artist: ${artists.join(", ")}.`);
+  if (parodies.length) synopsisParts.push(`Parody: ${parodies.join(", ")}.`);
 
   return {
     title,
     image,
     poster: image,
     cover: image,
-    synopsis: `Doujinshi gallery containing ${numPages} pages.`,
+    synopsis: synopsisParts.join(" "),
     imdbId: id,
     type: "comic",
     tags,
+    cast: artists,
     totalChapters: 1,
     linkList: [
       {

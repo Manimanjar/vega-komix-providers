@@ -41,10 +41,14 @@ export async function getStream({
   const pages: any[] = [];
 
   if (loadDir && loadId && pageKeys.length > 0) {
+    // g_th values are "type,width,height" — e.g. "w,800,1120" or "j,752,1853".
+    // The first char is the image type (w=webp, j=jpg, p=png) and the host is
+    // i3.hentaifox.com (i.hentaifox.com 404s).
     pageKeys.forEach((key, index) => {
-      const typeCode = gTh[key];
+      const raw = String(gTh[key] || "");
+      const typeCode = raw.split(",")[0].trim().toLowerCase();
       const ext = typeCode === "p" ? "png" : typeCode === "w" ? "webp" : "jpg";
-      const imageUrl = `https://i.hentaifox.com/${loadDir}/${loadId}/${key}.${ext}`;
+      const imageUrl = `https://i3.hentaifox.com/${loadDir}/${loadId}/${key}.${ext}`;
       pages.push({
         index,
         server: `Page ${index + 1}`,

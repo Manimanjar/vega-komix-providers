@@ -9,6 +9,19 @@ export const catalog: CatalogList = [
     title: "Latest Updates",
     filter: "order[latestUploadedChapter]=desc",
   },
+  // MangaDex has exactly one family-related tag: Incest
+  // (5bd0e105-4481-44ca-b6e7-7544da56b1a3). There is no Family, mother, sister,
+  // brother or father tag, so Family uses the same tag ordered by latest
+  // uploads (the freshest family-themed manga). Both lists only include the
+  // provider's safe/suggestive/erotica ratings, never pornographic.
+  {
+    title: "Incest",
+    filter: "includedTags[]=5bd0e105-4481-44ca-b6e7-7544da56b1a3&order[followedCount]=desc",
+  },
+  {
+    title: "Family",
+    filter: "includedTags[]=5bd0e105-4481-44ca-b6e7-7544da56b1a3&order[latestUploadedChapter]=desc",
+  },
   {
     title: "Top Rated",
     filter: "order[rating]=desc",

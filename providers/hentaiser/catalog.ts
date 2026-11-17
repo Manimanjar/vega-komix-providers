@@ -10,6 +10,16 @@ export const catalog: CatalogList = [
     filter: "sort=dt",
   },
   {
+    title: "Incest",
+    filter: "tags=incest",
+  },
+  {
+    title: "Family",
+    // The "family" tag on this API is mostly the Spy x Family parody, so
+    // Family merges the mother/sister/brother/father tag lists.
+    filter: "multi:tags=mother|tags=sister|tags=brother|tags=father",
+  },
+  {
     title: "Top Rated",
     filter: "sort=rates",
   },
