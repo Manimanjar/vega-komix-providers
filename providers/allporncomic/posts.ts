@@ -178,19 +178,22 @@ export async function getPosts({
   const posts = parseMadaraPosts(html, providerContext.cheerio, "allporncomic");
   if (posts.length > 0) return posts;
 
-  // Genre/tag fallback (user, 2026-11-18): the site's comics carry
-  // incest and family as TAGS, but the Incest/Family categories used
-  // the genre archive (/porncomic-genre/<slug>/), which comes back
-  // empty. If a genre page yields nothing, retry the same slug as a
-  // tag archive (/porncomic-tag/<slug>/) — whichever taxonomy the site
-  // actually uses, the category shows its comics instead of nothing.
+  // Genre/category fallback (user, 2026-11-18): the site's taxonomy is
+  // /porncomic-category/<slug>/, NOT /porncomic-genre/<slug>/ — the
+  // genre URLs redirect to the site's 404 page and the tag URLs
+  // redirect to the homepage, both returning 0 cards. Verified live
+  // 2026-11-18: Incest lives at /porncomic-category/inceste/ (1,701
+  // comics) and Family at /porncomic-category/familya/ (73 comics).
+  // The catalog now uses those URLs directly; this fallback catches
+  // any other genre filter that still comes back empty by retrying it
+  // under the category taxonomy, then by the site's own search.
   const genreMatch = baseFilter.match(/^\/porncomic-genre\/([^/]+)\/?$/);
   if (genreMatch && page <= 1) {
-    const tagUrl = `${BASE_URL}/porncomic-tag/${genreMatch[1]}/`;
+    const catUrl = `${BASE_URL}/porncomic-category/${genreMatch[1]}/`;
     try {
-      const tagHtml = await fetchWithWafFallback(tagUrl, providerContext, signal, true);
-      const tagPosts = parseMadaraPosts(tagHtml, providerContext.cheerio, "allporncomic");
-      if (tagPosts.length > 0) return tagPosts;
+      const catHtml = await fetchWithWafFallback(catUrl, providerContext, signal, true);
+      const catPosts = parseMadaraPosts(catHtml, providerContext.cheerio, "allporncomic");
+      if (catPosts.length > 0) return catPosts;
     } catch {
       // fall through to the search fallback below
     }
