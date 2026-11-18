@@ -175,7 +175,41 @@ export async function getPosts({
   // allowWafDialog was false here (and in meta/stream) which left the
   // provider permanently dead whenever Cloudflare challenged.
   const html = await fetchWithWafFallback(targetUrl, providerContext, signal, true);
-  return parseMadaraPosts(html, providerContext.cheerio, "allporncomic");
+  const posts = parseMadaraPosts(html, providerContext.cheerio, "allporncomic");
+  if (posts.length > 0) return posts;
+
+  // Genre/tag fallback (user, 2026-11-18): the site's comics carry
+  // incest and family as TAGS, but the Incest/Family categories used
+  // the genre archive (/porncomic-genre/<slug>/), which comes back
+  // empty. If a genre page yields nothing, retry the same slug as a
+  // tag archive (/porncomic-tag/<slug>/) — whichever taxonomy the site
+  // actually uses, the category shows its comics instead of nothing.
+  const genreMatch = baseFilter.match(/^\/porncomic-genre\/([^/]+)\/?$/);
+  if (genreMatch && page <= 1) {
+    const tagUrl = `${BASE_URL}/porncomic-tag/${genreMatch[1]}/`;
+    try {
+      const tagHtml = await fetchWithWafFallback(tagUrl, providerContext, signal, true);
+      const tagPosts = parseMadaraPosts(tagHtml, providerContext.cheerio, "allporncomic");
+      if (tagPosts.length > 0) return tagPosts;
+    } catch {
+      // fall through to the search fallback below
+    }
+    // Last resort: the site's own search for the slug — it matches
+    // titles, tags and descriptions, so incest/family comics surface
+    // even if neither archive URL exists.
+    try {
+      const searchHtml = await fetchWithWafFallback(
+        `${BASE_URL}/?s=${encodeURIComponent(genreMatch[1])}&post_type=wp-manga`,
+        providerContext,
+        signal,
+        true,
+      );
+      return parseMadaraPosts(searchHtml, providerContext.cheerio, "allporncomic");
+    } catch {
+      return posts;
+    }
+  }
+  return posts;
 }
 
 export async function getSearchPosts({
