@@ -66,8 +66,13 @@ export async function getPosts({
       image: imageUrl,
       poster: imageUrl,
       cover: imageUrl,
-      rating: b.rates ? String(b.rates) : undefined,
+      rating: (() => {
+        const r = typeof b.rates === "number" ? b.rates : parseFloat(String(b.rates ?? ""));
+        return Number.isFinite(r) && r > 0 ? Math.round(r * 10) / 10 : undefined;
+      })(),
       views: typeof b.views === "number" ? b.views : undefined,
+      // Each book is a single gallery = 1 chapter.
+      chapterCount: 1,
     };
   });
 }
@@ -111,8 +116,13 @@ export async function getSearchPosts({
       image: imageUrl,
       poster: imageUrl,
       cover: imageUrl,
-      rating: b.rates ? String(b.rates) : undefined,
+      rating: (() => {
+        const r = typeof b.rates === "number" ? b.rates : parseFloat(String(b.rates ?? ""));
+        return Number.isFinite(r) && r > 0 ? Math.round(r * 10) / 10 : undefined;
+      })(),
       views: typeof b.views === "number" ? b.views : undefined,
+      // Each book is a single gallery = 1 chapter.
+      chapterCount: 1,
     };
   });
 }

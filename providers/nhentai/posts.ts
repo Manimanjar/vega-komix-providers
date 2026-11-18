@@ -29,6 +29,9 @@ function formatGallery(g: any): Post {
     cover,
     tag: g.num_pages ? `${g.num_pages}P` : undefined,
     provider: "nhentai",
+    // Each gallery is a single gallery = 1 chapter. nHentai shows no
+    // star rating or view count, so those stay unset (user, 2026-11-18).
+    chapterCount: 1,
   };
 }
 

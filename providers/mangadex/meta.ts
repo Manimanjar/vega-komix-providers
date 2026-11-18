@@ -108,6 +108,35 @@ export async function getMeta({
   const status = attrs.status ? String(attrs.status).toUpperCase() : "ONGOING";
   const contentRating = attrs.contentRating ? String(attrs.contentRating) : "safe";
 
+  // Real star rating & chapter count (user, 2026-11-18): the manga
+  // response has no rating — the bayesian average (out of 10, as
+  // MangaDex shows it) lives on /statistics/manga. The old code put
+  // the content classification ("safe"/"erotica") in `rating`, which
+  // the app shows as a star badge — that was wrong, so it is now the
+  // real star rating. lastChapter is the total chapter count.
+  // Best-effort: a failed statistics call leaves rating unset.
+  let rating: string | undefined;
+  try {
+    const statsData = await fetchMangaDexJson(
+      `${BASE_API}/statistics/manga/${mangaId}`,
+      providerContext
+    );
+    const bayesian = statsData?.statistics?.[mangaId]?.rating?.bayesian;
+    if (typeof bayesian === "number" && bayesian > 0) {
+      rating = String(Math.round(bayesian * 10) / 10);
+    }
+  } catch {}
+
+  const lastChapterRaw = attrs.lastChapter;
+  const lastChapterNum =
+    typeof lastChapterRaw === "string" && lastChapterRaw.trim() !== ""
+      ? parseInt(lastChapterRaw.trim(), 10)
+      : NaN;
+  const totalChapters =
+    Number.isFinite(lastChapterNum) && lastChapterNum > 0
+      ? lastChapterNum
+      : 1;
+
   return {
     title,
     image,
@@ -119,7 +148,8 @@ export async function getMeta({
     author,
     artist,
     status,
-    rating: contentRating,
+    rating,
+    totalChapters,
     tags,
     linkList: [
       {

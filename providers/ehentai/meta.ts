@@ -15,6 +15,9 @@ export async function getMeta({
   let image = "";
   let tags: string[] = ["Western Comics", "Doujinshi"];
   let filecount = 1;
+  // Real star rating from the gdata API (set below); E-Hentai shows no
+  // public view count, so `views` stays unset.
+  let rating: string | undefined;
 
   if (m) {
     const gid = parseInt(m[1], 10);
@@ -41,6 +44,13 @@ export async function getMeta({
         }
         if (gdata.filecount) {
           filecount = parseInt(gdata.filecount, 10);
+        }
+        // Real star rating from the official API (user, 2026-11-18).
+        if (typeof gdata.rating === "number" && gdata.rating > 0) {
+          rating = String(Math.round(gdata.rating * 10) / 10);
+        } else if (typeof gdata.rating === "string") {
+          const r = parseFloat(gdata.rating);
+          if (Number.isFinite(r) && r > 0) rating = String(Math.round(r * 10) / 10);
         }
       }
     } catch {}
@@ -72,6 +82,7 @@ export async function getMeta({
     imdbId: fullUrl,
     type: "comic",
     tags,
+    rating,
     totalChapters: 1,
     linkList: [
       {

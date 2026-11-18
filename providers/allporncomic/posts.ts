@@ -127,6 +127,15 @@ export function parseMadaraPosts(
     const image = cleanThumbnailUrl(rawImg);
     const latestChapter = $(el).find(".list-chapter .chapter-item a").first().text().trim();
     const rating = $(el).find(".score.total_votes").text().trim();
+    // Rating & chapter count as proper fields (user, 2026-11-18): the
+    // rating is the site's score (e.g. "4.5"), the chapter count is
+    // the number in the latest-chapter label (e.g. "Chapter 12" -> 12).
+    // cornerTag keeps showing the star so the card looks the same.
+    const ratingNum = rating ? parseFloat(rating) : NaN;
+    const chapterMatch = latestChapter.match(/(\d+)/);
+    const chapterCount = chapterMatch
+      ? parseInt(chapterMatch[1], 10)
+      : undefined;
 
     posts.push({
       title,
@@ -137,6 +146,8 @@ export function parseMadaraPosts(
       tag: latestChapter || undefined,
       cornerTag: rating ? `${rating}★` : "HD",
       provider: providerValue,
+      rating: Number.isFinite(ratingNum) && ratingNum > 0 ? ratingNum : undefined,
+      chapterCount,
     });
   });
 

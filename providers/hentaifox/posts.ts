@@ -38,6 +38,9 @@ function parseThumbs($: any): Post[] {
       poster: cover,
       cover,
       provider: "hentaifox",
+      // Each gallery is a single gallery = 1 chapter. HentaiFox shows
+      // no star rating or view count, so those stay unset (2026-11-18).
+      chapterCount: 1,
     });
   });
   return posts;
