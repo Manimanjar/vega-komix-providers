@@ -19,6 +19,17 @@ export interface Post {
   borderRadius?: number;
   tag?: string;
   cornerTag?: string;
+  // Rating & views as shown on the site (user, 2026-11-18): rating is
+  // the site's star/score value (number, e.g. 4.5, or a string the
+  // site shows), views is the site's real view count. Both are
+  // optional — a site that does not show them leaves them unset, and
+  // the app treats unset as "unknown" (sorts last, no badge).
+  rating?: number | string;
+  views?: number;
+  // Total chapter count for this comic, as shown on the site's list
+  // card (latest chapter number, or the count from the detail page).
+  // Single-gallery sites report 1.
+  chapterCount?: number;
   [key: string]: any;
 }
 
@@ -85,6 +96,10 @@ export interface Info {
   tags?: string[];
   cast?: string[];
   rating?: string;
+  // Real view count as shown on the site's detail page (user,
+  // 2026-11-18). Optional — a site that does not show views leaves it
+  // unset and the app hides the views badge.
+  views?: number;
   linkList: Link[];
   webUrl?: string;
   author?: string;

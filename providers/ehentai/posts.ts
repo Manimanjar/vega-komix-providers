@@ -84,7 +84,67 @@ async function fetchList(
     timeout: 15000,
   });
   const $ = providerContext.cheerio.load(res.data);
-  return parseRows($);
+  const posts = parseRows($);
+  await attachRatings(posts, providerContext);
+  return posts;
+}
+
+// Rating & chapter count (user, 2026-11-18): the list's star sprite
+// (.ir background-position) is not a reliable rating decoder, so the
+// exact rating comes from the official gdata API, which takes up to 25
+// galleries in ONE batch call. Best-effort: a failed call leaves posts
+// without a rating instead of breaking the list. Every E-Hentai gallery
+// is a single gallery = 1 chapter.
+async function attachRatings(
+  posts: Post[],
+  providerContext: ProviderContext,
+): Promise<void> {
+  if (posts.length === 0) return;
+  const gidlist: [number, string][] = [];
+  const byGid = new Map<number, Post>();
+  for (const post of posts) {
+    const m = post.link.match(/\/g\/(\d+)\/([a-f0-9]+)/i);
+    if (!m) continue;
+    const gid = parseInt(m[1], 10);
+    if (byGid.has(gid)) continue;
+    gidlist.push([gid, m[2]]);
+    byGid.set(gid, post);
+    // Single gallery = 1 chapter (set here so it applies to every post
+    // that has a parseable gallery link).
+    post.chapterCount = 1;
+  }
+  // Any post without a parseable gallery link is still a single gallery.
+  for (const post of posts) {
+    if (post.chapterCount == null) post.chapterCount = 1;
+  }
+  if (gidlist.length === 0) return;
+  try {
+    const apiRes = await providerContext.axios.post(
+      API_URL,
+      { method: "gdata", gidlist, namespace: 1 },
+      {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
+          Accept: "application/json, */*",
+        },
+        timeout: 15000,
+      },
+    );
+    const gmetadata = apiRes.data?.gmetadata;
+    if (!Array.isArray(gmetadata)) return;
+    for (const g of gmetadata) {
+      const post = byGid.get(g.gid);
+      if (!post) continue;
+      const rating = typeof g.rating === "number" ? g.rating : parseFloat(g.rating);
+      if (Number.isFinite(rating) && rating > 0) {
+        post.rating = Math.round(rating * 10) / 10;
+      }
+    }
+  } catch {
+    // Rating is enrichment only; a failed gdata call must not break
+    // the list.
+  }
 }
 
 function listUrl(filter: string, page: number): string {

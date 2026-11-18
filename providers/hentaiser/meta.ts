@@ -67,6 +67,19 @@ export async function getMeta({
     imdbId: gid,
     type: "comic",
     status: "COMPLETED",
+    // Rating & views as proper fields too (user, 2026-11-18) so the
+    // app shows them as badges next to the synopsis, not only inside
+    // the synopsis text.
+    rating: (() => {
+      const r =
+        typeof data.rates === "number"
+          ? data.rates
+          : parseFloat(String(data.rates ?? ""));
+      return Number.isFinite(r) && r > 0
+        ? String(Math.round(r * 10) / 10)
+        : undefined;
+    })(),
+    views: typeof data.views === "number" ? data.views : undefined,
     totalChapters: 1,
     tags: tagList.length > 0 ? tagList : ["Doujinshi", "Manga"],
     linkList: [

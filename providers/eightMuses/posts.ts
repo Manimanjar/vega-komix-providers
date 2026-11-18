@@ -45,6 +45,9 @@ export function parse8MusesHtml(
           tag: item.pages ? `${item.pages}P` : undefined,
           cornerTag: item.author || "8Muses",
           provider: "eightMuses",
+          // Each album is a single album = 1 chapter. 8Muses shows no
+          // star rating or view count, so those stay unset (2026-11-18).
+          chapterCount: 1,
         });
       }
     } catch {}
@@ -94,6 +97,7 @@ export function parse8MusesHtml(
         cover: cover,
         provider: "eightMuses",
         cornerTag: "8Muses",
+        chapterCount: 1,
       });
     });
   }

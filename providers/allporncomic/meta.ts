@@ -41,6 +41,32 @@ export async function getMeta({
 
   const status = $(".post-status .summary-content").first().text().trim();
 
+  // Rating & views (user, 2026-11-18): Madara shows the score in
+  // .score (same class as the list cards) and the view count in the
+  // summary's Views row. Views may use K/M suffixes (e.g. "1.2K").
+  let rating: string | undefined;
+  const scoreText = $(".post-rating .score, .summary_content .score, .score")
+    .first()
+    .text()
+    .trim();
+  const scoreNum = scoreText ? parseFloat(scoreText) : NaN;
+  if (Number.isFinite(scoreNum) && scoreNum > 0) {
+    rating = String(Math.round(scoreNum * 10) / 10);
+  }
+  let views: number | undefined;
+  $(".post-content_item, .summary_content .post-content_item, .post-content .post-content_item").each((_, el) => {
+    if (views != null) return;
+    const t = $(el).text().replace(/\s+/g, " ").trim();
+    const m = t.match(/views?\s*:?\s*([\d,.]+)\s*([kKmM]?)\b/i);
+    if (!m) return;
+    let n = parseFloat(m[1].replace(/,/g, ""));
+    if (!Number.isFinite(n)) return;
+    const suffix = (m[2] || "").toUpperCase();
+    if (suffix === "K") n *= 1000;
+    else if (suffix === "M") n *= 1000000;
+    views = Math.round(n);
+  });
+
   const tags: string[] = [];
   $(".genres-content a").each((_, el) => {
     const t = $(el).text().trim();
@@ -152,6 +178,8 @@ export async function getMeta({
     author,
     tags,
     status,
+    rating,
+    views,
     totalChapters: directLinks.length,
     linkList,
   };

@@ -35,6 +35,19 @@ function formatPost(item: any, providerValue = "mangadex"): Post {
   else if (origLang === "zh") tag = "Manhua";
   else if (origLang === "en") tag = "Comic";
 
+  // Chapter count: the API's lastChapter is the latest chapter number,
+  // which is the total for a completed series and the count so far for
+  // an ongoing one. Shown as a badge on the thumbnail (user 2026-11-18).
+  const lastChapterRaw = item.attributes?.lastChapter;
+  const lastChapterNum =
+    typeof lastChapterRaw === "string" && lastChapterRaw.trim() !== ""
+      ? parseInt(lastChapterRaw.trim(), 10)
+      : NaN;
+  const chapterCount =
+    Number.isFinite(lastChapterNum) && lastChapterNum > 0
+      ? lastChapterNum
+      : undefined;
+
   return {
     title,
     link: mangaId,
@@ -46,7 +59,42 @@ function formatPost(item: any, providerValue = "mangadex"): Post {
       ? item.attributes.status.toUpperCase()
       : undefined,
     tag,
+    chapterCount,
   };
+}
+
+// Batch rating lookup (user, 2026-11-18): the manga list response has
+// no rating — the bayesian average lives on /statistics/manga, which
+// takes many IDs in ONE call. Best-effort: if it fails, posts simply
+// have no rating (the app sorts them last) instead of breaking the list.
+async function attachRatings(
+  posts: Post[],
+  providerContext: ProviderContext,
+  signal?: AbortSignal
+): Promise<void> {
+  const ids = posts.map((p) => p.link).filter(Boolean);
+  if (ids.length === 0) return;
+  try {
+    const query = ids
+      .map((id) => `manga[]=${encodeURIComponent(id)}`)
+      .join("&");
+    const resData = await fetchMangaDexJson(
+      `${BASE_API}/statistics/manga?${query}`,
+      providerContext,
+      signal
+    );
+    const stats = resData?.statistics;
+    if (!stats || typeof stats !== "object") return;
+    for (const post of posts) {
+      const bayesian = stats[post.link]?.rating?.bayesian;
+      if (typeof bayesian === "number" && bayesian > 0) {
+        post.rating = Math.round(bayesian * 10) / 10;
+      }
+    }
+  } catch {
+    // Rating is enrichment only; a failed statistics call must not
+    // break the list.
+  }
 }
 
 async function fetchMangaDexJson(
@@ -110,7 +158,9 @@ export async function getPosts({
     return [];
   }
 
-  return data.map((item: any) => formatPost(item, providerValue));
+  const posts = data.map((item: any) => formatPost(item, providerValue));
+  await attachRatings(posts, providerContext, signal);
+  return posts;
 }
 
 export async function getSearchPosts({
@@ -138,5 +188,7 @@ export async function getSearchPosts({
     return [];
   }
 
-  return data.map((item: any) => formatPost(item, providerValue));
+  const posts = data.map((item: any) => formatPost(item, providerValue));
+  await attachRatings(posts, providerContext, signal);
+  return posts;
 }

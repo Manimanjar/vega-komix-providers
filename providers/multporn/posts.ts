@@ -40,6 +40,10 @@ function parseCards($: any): Post[] {
       poster: img,
       cover: img,
       provider: "multporn",
+      // Each comic is a single comic = 1 chapter. MultPorn shows no
+      // star rating or view count on list cards, so those stay unset
+      // (2026-11-18).
+      chapterCount: 1,
     });
   };
 
