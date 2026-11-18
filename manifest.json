@@ -2,7 +2,7 @@
   {
     "display_name": "MangaDex",
     "value": "mangadex",
-    "version": "1.2.0",
+    "version": "1.3.0",
     "icon": "https://mangadex.org/favicon.ico",
     "type": "comic",
     "hasSettings": false,
@@ -11,7 +11,7 @@
   {
     "display_name": "8Muses",
     "value": "eightMuses",
-    "version": "1.2.0",
+    "version": "1.3.0",
     "icon": "https://8muses.io/favicon.ico",
     "type": "comic",
     "hasSettings": false,
@@ -20,7 +20,7 @@
   {
     "display_name": "AllPornComic",
     "value": "allporncomic",
-    "version": "1.2.0",
+    "version": "1.3.0",
     "icon": "https://allporncomic.com/favicon.ico",
     "type": "comic",
     "hasSettings": false,
@@ -49,15 +49,6 @@
     "value": "hentaifox",
     "version": "1.2.0",
     "icon": "https://hentaifox.com/favicon.ico",
-    "type": "comic",
-    "hasSettings": false,
-    "disabled": false
-  },
-  {
-    "display_name": "HDPornComics",
-    "value": "hdporncomics",
-    "version": "1.2.0",
-    "icon": "https://hdporncomics.com/favicon.ico",
     "type": "comic",
     "hasSettings": false,
     "disabled": false

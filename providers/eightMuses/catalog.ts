@@ -38,15 +38,15 @@ export const catalog: CatalogList = [
 export const genres: CatalogList = [
   {
     title: "3D Comics",
-    filter: "/genres?genre=3D",
+    filter: "/tag/3d",
   },
   {
     title: "Big Breasts",
-    filter: "/genres?genre=Big+Breasts",
+    filter: "/tag/big-breasts",
   },
   {
     title: "MILF",
-    filter: "/genres?genre=MILF",
+    filter: "/tag/milf",
   },
   {
     title: "Incest",
@@ -56,18 +56,18 @@ export const genres: CatalogList = [
   },
   {
     title: "Cheating",
-    filter: "/genres?genre=Cheating",
+    filter: "/tag/cheating",
   },
   {
     title: "Western",
-    filter: "/genres?genre=Western",
+    filter: "/tag/western",
   },
   {
     title: "Group",
-    filter: "/genres?genre=Group",
+    filter: "/tag/group",
   },
   {
     title: "Full Color",
-    filter: "/genres?genre=Full+Color",
+    filter: "/tag/full-color",
   },
 ];

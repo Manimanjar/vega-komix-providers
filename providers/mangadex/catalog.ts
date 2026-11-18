@@ -43,7 +43,7 @@ export const catalog: CatalogList = [
 export const genres: CatalogList = [
   {
     title: "Action",
-    filter: "includedTags[]=391b04d2-d83b-44e6-be45-40ec522e6844",
+    filter: "includedTags[]=391b0423-d847-456f-aff0-8b0cfc03066b",
   },
   {
     title: "Adventure",
@@ -59,19 +59,19 @@ export const genres: CatalogList = [
   },
   {
     title: "Fantasy",
-    filter: "includedTags[]=cdc58574-82b0-456b-ad23-54942d0e6dbf",
+    filter: "includedTags[]=cdc58593-87dd-415e-bbc0-2ec27bf404cc",
   },
   {
     title: "Isekai",
-    filter: "includedTags[]=ace0429e-3b10-4321-8010-0c4c478f7292",
+    filter: "includedTags[]=ace04997-f6bd-436e-b261-779182193d3d",
   },
   {
     title: "Horror",
-    filter: "includedTags[]=cdad7e68-1419-41dd-bdce-6ea700daddde",
+    filter: "includedTags[]=cdad7e68-1419-41dd-bdce-27753074a640",
   },
   {
     title: "Mystery",
-    filter: "includedTags[]=ee96342a-38fc-4297-962e-3c224e75d048",
+    filter: "includedTags[]=ee968100-4191-4968-93d3-f82d72be7e46",
   },
   {
     title: "Psychological",
@@ -83,7 +83,7 @@ export const genres: CatalogList = [
   },
   {
     title: "Sci-Fi",
-    filter: "includedTags[]=256c8bd9-4904-43c3-bf41-1812634e4d1b",
+    filter: "includedTags[]=256c8bd9-4904-4360-bf4f-508a76d67183",
   },
   {
     title: "Slice of Life",
@@ -91,6 +91,6 @@ export const genres: CatalogList = [
   },
   {
     title: "Supernatural",
-    filter: "includedTags[]=eabc5b4c-6aff-42f3-b657-3e1900004b35",
+    filter: "includedTags[]=eabc5b4c-6aff-42f3-b657-3e90cbd00b75",
   },
 ];

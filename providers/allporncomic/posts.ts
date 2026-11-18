@@ -175,7 +175,44 @@ export async function getPosts({
   // allowWafDialog was false here (and in meta/stream) which left the
   // provider permanently dead whenever Cloudflare challenged.
   const html = await fetchWithWafFallback(targetUrl, providerContext, signal, true);
-  return parseMadaraPosts(html, providerContext.cheerio, "allporncomic");
+  const posts = parseMadaraPosts(html, providerContext.cheerio, "allporncomic");
+  if (posts.length > 0) return posts;
+
+  // Genre/category fallback (user, 2026-11-18): the site's taxonomy is
+  // /porncomic-category/<slug>/, NOT /porncomic-genre/<slug>/ — the
+  // genre URLs redirect to the site's 404 page and the tag URLs
+  // redirect to the homepage, both returning 0 cards. Verified live
+  // 2026-11-18: Incest lives at /porncomic-category/inceste/ (1,701
+  // comics) and Family at /porncomic-category/familya/ (73 comics).
+  // The catalog now uses those URLs directly; this fallback catches
+  // any other genre filter that still comes back empty by retrying it
+  // under the category taxonomy, then by the site's own search.
+  const genreMatch = baseFilter.match(/^\/porncomic-genre\/([^/]+)\/?$/);
+  if (genreMatch && page <= 1) {
+    const catUrl = `${BASE_URL}/porncomic-category/${genreMatch[1]}/`;
+    try {
+      const catHtml = await fetchWithWafFallback(catUrl, providerContext, signal, true);
+      const catPosts = parseMadaraPosts(catHtml, providerContext.cheerio, "allporncomic");
+      if (catPosts.length > 0) return catPosts;
+    } catch {
+      // fall through to the search fallback below
+    }
+    // Last resort: the site's own search for the slug — it matches
+    // titles, tags and descriptions, so incest/family comics surface
+    // even if neither archive URL exists.
+    try {
+      const searchHtml = await fetchWithWafFallback(
+        `${BASE_URL}/?s=${encodeURIComponent(genreMatch[1])}&post_type=wp-manga`,
+        providerContext,
+        signal,
+        true,
+      );
+      return parseMadaraPosts(searchHtml, providerContext.cheerio, "allporncomic");
+    } catch {
+      return posts;
+    }
+  }
+  return posts;
 }
 
 export async function getSearchPosts({

@@ -11,14 +11,14 @@ export const catalog: CatalogList = [
   },
   {
     title: "Incest",
-    filter: "/porncomic-genre/incest/",
+    filter: "/porncomic-category/inceste/",
   },
   {
     title: "Family",
     // Same genre taxonomy as the existing Incest genre; the site is behind
     // Cloudflare from here so this slug could not be verified live — it needs
     // one check on the phone after the WAF challenge is solved.
-    filter: "/porncomic-genre/family/",
+    filter: "/porncomic-category/familya/",
   },
   {
     title: "Top Rated",
@@ -53,18 +53,18 @@ export const genres: CatalogList = [
   },
   {
     title: "Big Breasts",
-    filter: "/porncomic-genre/big-breasts/",
+    filter: "/porncomic-category/big-breasts/",
   },
   {
     title: "MILF",
-    filter: "/porncomic-genre/milf/",
+    filter: "/porncomic-category/milf/",
   },
   {
     title: "Incest",
-    filter: "/porncomic-genre/incest/",
+    filter: "/porncomic-category/inceste/",
   },
   {
     title: "Full Color",
-    filter: "/porncomic-genre/full-color/",
+    filter: "/porncomic-category/full-color/",
   },
 ];
