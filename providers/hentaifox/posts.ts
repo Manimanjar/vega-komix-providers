@@ -62,7 +62,11 @@ async function fetchList(
 
 function listUrl(pathPart: string, page: number): string {
   const p = pathPart.endsWith("/") ? pathPart : `${pathPart}/`;
-  return page > 1 ? `${BASE_URL}${p}pag/${page}/` : `${BASE_URL}${p}`;
+  // The site's /pag/N/ is OFF BY ONE: /pag/2/ returns page 1's content
+  // and /pag/3/ returns page 2's (proved live 2026-11-18: / and /pag/2/
+  // share the same first gallery, /pag/3/ a new one). So page N lives at
+  // /pag/(N+1)/.
+  return page > 1 ? `${BASE_URL}${p}pag/${page + 1}/` : `${BASE_URL}${p}`;
 }
 
 export async function getPosts({
@@ -113,8 +117,11 @@ export async function getSearchPosts({
   providerContext: ProviderContext;
 }): Promise<Post[]> {
   if (!searchQuery?.trim()) return [];
+  // Search pagination is `?page=N` on the search URL — the old
+  // /search/pag/N/?q=... format 404s on page 2+ (proved live 2026-11-18),
+  // which is why search only ever returned page 1.
   const url = page > 1
-    ? `${BASE_URL}/search/pag/${page}/?q=${encodeURIComponent(searchQuery.trim())}`
+    ? `${BASE_URL}/search/?q=${encodeURIComponent(searchQuery.trim())}&page=${page}`
     : `${BASE_URL}/search/?q=${encodeURIComponent(searchQuery.trim())}`;
   try {
     return await fetchList(url, signal, providerContext);

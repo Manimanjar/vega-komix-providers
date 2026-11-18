@@ -73,22 +73,6 @@ function parseRows($: any): Post[] {
   return posts;
 }
 
-async function fetchList(
-  url: string,
-  signal: AbortSignal | undefined,
-  providerContext: ProviderContext,
-): Promise<Post[]> {
-  const res = await providerContext.axios.get(url, {
-    headers: { ...providerContext.commonHeaders, ...COMMON_HEADERS },
-    signal,
-    timeout: 15000,
-  });
-  const $ = providerContext.cheerio.load(res.data);
-  const posts = parseRows($);
-  await attachRatings(posts, providerContext);
-  return posts;
-}
-
 // Rating & chapter count (user, 2026-11-18): the list's star sprite
 // (.ir background-position) is not a reliable rating decoder, so the
 // exact rating comes from the official gdata API, which takes up to 25
@@ -147,10 +131,113 @@ async function attachRatings(
   }
 }
 
-function listUrl(filter: string, page: number): string {
+// --- Cursor pagination -----------------------------------------------------
+// E-Hentai IGNORES ?page=N entirely (proved live 2026-11-18: /popular?page=0,
+// ?page=1 and ?page=2 all returned the same first gallery). The site
+// paginates with a `next=<gid>` cursor taken from the page's "Next >" link;
+// a page with no "Next" link is the last page (e.g. /popular is a single
+// page of ~73 galleries). Cursors are cached in kvStore — the sandbox
+// re-evaluates modules, so module-level state does not survive — keyed by
+// list + page number, so scrolling to page N fetches exactly that page.
+
+function withCursor(baseUrl: string, cursor: string): string {
+  return `${baseUrl}${baseUrl.includes("?") ? "&" : "?"}next=${cursor}`;
+}
+
+function extractNextCursor($: any): string | null {
+  let next: string | null = null;
+  $("a").each((_, el) => {
+    if (next) return;
+    const href = $(el).attr("href") || "";
+    const m = href.match(/[?&]next=(\d+)/);
+    if (m) next = m[1];
+  });
+  return next;
+}
+
+function cursorKey(listKey: string, page: number): string {
+  return `ehCursor:${listKey}:${page}`;
+}
+
+async function getCursor(kvStore: any, listKey: string, page: number): Promise<string | null> {
+  try {
+    const v = await kvStore.get(cursorKey(listKey, page));
+    return typeof v === "string" && v ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+async function setCursor(kvStore: any, listKey: string, page: number, cursor: string): Promise<void> {
+  try {
+    await kvStore.set(cursorKey(listKey, page), cursor);
+  } catch {
+    // Cache is best-effort; a failed write just means the next scroll
+    // walks forward again.
+  }
+}
+
+async function fetchListPage(
+  url: string,
+  signal: AbortSignal | undefined,
+  providerContext: ProviderContext,
+): Promise<{ posts: Post[]; nextCursor: string | null }> {
+  const res = await providerContext.axios.get(url, {
+    headers: { ...providerContext.commonHeaders, ...COMMON_HEADERS },
+    signal,
+    timeout: 15000,
+  });
+  const $ = providerContext.cheerio.load(res.data);
+  const posts = parseRows($);
+  await attachRatings(posts, providerContext);
+  return { posts, nextCursor: extractNextCursor($) };
+}
+
+// Fetch exactly app-page `page` of one list (identified by `listKey`, fetched
+// from `baseUrl`). Page 1 needs no cursor; later pages use the cached cursor
+// for that page. On a cache miss (fresh install, cleared storage, or a jump
+// to a page never visited) walk forward from page 1 following "Next" links
+// and caching each cursor, until the requested page — or return [] if the
+// list runs out first, so the app stops scrolling instead of repeating
+// page 1 forever.
+async function fetchCursorPage(
+  listKey: string,
+  baseUrl: string,
+  page: number,
+  signal: AbortSignal | undefined,
+  providerContext: ProviderContext,
+): Promise<Post[]> {
+  const kvStore = providerContext.kvStore;
+  if (page <= 1) {
+    const { posts, nextCursor } = await fetchListPage(baseUrl, signal, providerContext);
+    if (nextCursor) await setCursor(kvStore, listKey, 2, nextCursor);
+    return posts;
+  }
+  const cached = await getCursor(kvStore, listKey, page);
+  if (cached) {
+    const { posts, nextCursor } = await fetchListPage(withCursor(baseUrl, cached), signal, providerContext);
+    if (nextCursor) await setCursor(kvStore, listKey, page + 1, nextCursor);
+    return posts;
+  }
+  let currentPage = 1;
+  let currentUrl = baseUrl;
+  let guard = 0;
+  while (currentPage <= page && guard < 50) {
+    guard++;
+    const { posts, nextCursor } = await fetchListPage(currentUrl, signal, providerContext);
+    if (currentPage === page) return posts;
+    if (!nextCursor) return []; // list ended before the requested page
+    await setCursor(kvStore, listKey, currentPage + 1, nextCursor);
+    currentUrl = withCursor(baseUrl, nextCursor);
+    currentPage++;
+  }
+  return [];
+}
+
+function listBaseUrl(filter: string): string {
   return filter.startsWith("/")
-    ? `${BASE_URL}${filter}?page=${page - 1}`
-    : `${BASE_URL}/${filter}&page=${page - 1}`;
+    ? `${BASE_URL}${filter}`
+    : `${BASE_URL}/${filter}`;
 }
 
 export async function getPosts({
@@ -173,8 +260,10 @@ export async function getPosts({
       const seen = new Set<string>();
       const merged: Post[] = [];
       for (const term of terms) {
-        const posts = await fetchList(
-          `${BASE_URL}/?f_search=${encodeURIComponent(term)}&page=${page - 1}`,
+        const posts = await fetchCursorPage(
+          `s:${encodeURIComponent(term)}`,
+          `${BASE_URL}/?f_search=${encodeURIComponent(term)}`,
+          page,
           signal,
           providerContext,
         );
@@ -188,7 +277,13 @@ export async function getPosts({
       }
       return merged.slice(0, 50);
     }
-    return await fetchList(listUrl(filter, page), signal, providerContext);
+    return await fetchCursorPage(
+      `f:${encodeURIComponent(filter)}`,
+      listBaseUrl(filter),
+      page,
+      signal,
+      providerContext,
+    );
   } catch {
     return [];
   }
@@ -206,9 +301,14 @@ export async function getSearchPosts({
   providerContext: ProviderContext;
 }): Promise<Post[]> {
   if (!searchQuery?.trim()) return [];
-  const url = `${BASE_URL}/?f_search=${encodeURIComponent(searchQuery.trim())}&page=${page - 1}`;
   try {
-    return await fetchList(url, signal, providerContext);
+    return await fetchCursorPage(
+      `s:${encodeURIComponent(searchQuery.trim())}`,
+      `${BASE_URL}/?f_search=${encodeURIComponent(searchQuery.trim())}`,
+      page,
+      signal,
+      providerContext,
+    );
   } catch {
     return [];
   }

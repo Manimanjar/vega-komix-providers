@@ -144,6 +144,56 @@ async function fetchIndexComics(
   return merged.slice(0, 60);
 }
 
+// Cross-page dedupe for the series-index categories (/comics, /hentai_manga).
+// The same comic can sit inside two different series pages, and those series
+// can live on different index pages — so a comic can legitimately reappear
+// on app-page 2 or 3 even though the index pages themselves do not overlap
+// (proved live 2026-11-18: 4 dupes across 3 pages). The provider already
+// dedupes within one call; this dedupes across calls. State lives in kvStore
+// (the sandbox re-evaluates modules) as { lastPage, seen: [links] } per
+// filter. Forward scroll (page == lastPage + 1) extends the seen set;
+// any other request (a re-request, or a fresh open asking for page 1 again)
+// RESETS it, so a fresh open always shows the full list again instead of
+// an empty filtered page. Bounded: the seen set holds only this filter's
+// comics (a few hundred links, well inside the 1 MB kvStore value cap).
+async function dedupeIndexPage(
+  filter: string,
+  page: number,
+  posts: Post[],
+  providerContext: ProviderContext,
+): Promise<Post[]> {
+  const kvStore = providerContext.kvStore;
+  if (!kvStore || typeof kvStore.get !== "function" || typeof kvStore.set !== "function") {
+    return posts;
+  }
+  const key = `multpornSeen:${filter}`;
+  let state: { lastPage: number; seen: string[] } = { lastPage: 0, seen: [] };
+  try {
+    const raw = await kvStore.get(key);
+    const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+    if (parsed && typeof parsed.lastPage === "number" && Array.isArray(parsed.seen)) {
+      state = parsed;
+    }
+  } catch {
+    // Corrupt or missing state: start fresh.
+  }
+  // Fresh open / re-request: reset so the full list shows again.
+  const forward = page === state.lastPage + 1;
+  const seen = new Set<string>(forward ? state.seen : []);
+  const kept: Post[] = [];
+  for (const post of posts) {
+    if (seen.has(post.link)) continue;
+    seen.add(post.link);
+    kept.push(post);
+  }
+  try {
+    await kvStore.set(key, JSON.stringify({ lastPage: page, seen: [...seen] }));
+  } catch {
+    // Best-effort: a failed write just means the next page may repeat a comic.
+  }
+  return kept;
+}
+
 export async function getPosts({
   page = 1,
   filter = "/new",
@@ -161,7 +211,8 @@ export async function getPosts({
     }
     // /comics and /hentai_manga are series indexes — expand them into real comics.
     if (filter === "/comics" || filter === "/hentai_manga") {
-      return await fetchIndexComics(filter, page, signal, providerContext);
+      const posts = await fetchIndexComics(filter, page, signal, providerContext);
+      return await dedupeIndexPage(filter, page, posts, providerContext);
     }
     const url = page > 1
       ? `${BASE_URL}${filter}?page=${page - 1}`
