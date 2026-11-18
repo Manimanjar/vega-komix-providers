@@ -56,7 +56,11 @@ function parseRows($: any): Post[] {
     if (!href || seen.has(href)) return;
     seen.add(href);
     const img = $row.find("img").first();
-    const cover = img.attr("src") || img.attr("data-src") || "";
+    // Thumbnails are lazy-loaded: src is a 1px transparent placeholder gif and
+    // the real address is in data-src. Prefer data-src and drop data: URIs,
+    // otherwise the app shows an invisible thumbnail that never errors.
+    const rawCover = img.attr("data-src") || img.attr("src") || "";
+    const cover = rawCover.startsWith("data:") ? "" : rawCover;
     posts.push({
       title,
       link: href,

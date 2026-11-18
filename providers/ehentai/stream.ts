@@ -35,8 +35,10 @@ export async function getStream({
   const pages: any[] = [];
   const maxPages = Math.min(viewerLinks.length, 120);
 
-  // Fetch images in concurrent batches of 4
-  const batchSize = 4;
+  // Fetch images in concurrent batches of 8. Each /s/ viewer page takes ~0.4s,
+  // so batches of 4 made a 100-page gallery wait ~10s+ for its page list.
+  // Kept at 8, not higher: e-hentai.org rate-limits aggressive parallel hits.
+  const batchSize = 8;
   for (let i = 0; i < maxPages; i += batchSize) {
     const chunk = viewerLinks.slice(i, i + batchSize);
     const results = await Promise.allSettled(
