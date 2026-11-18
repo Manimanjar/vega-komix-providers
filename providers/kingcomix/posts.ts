@@ -78,8 +78,11 @@ async function fetchList(
 }
 
 function searchUrl(q: string, page: number): string {
+  // WordPress pagination is `paged=`, NOT `page=` — `page=` is ignored
+  // and the site returns page 1 every time (proved live 2026-11-18:
+  // &page=2 returned the same first comic as page 1, &paged=2 a new one).
   return page > 1
-    ? `${BASE_URL}/?s=${encodeURIComponent(q)}&page=${page}`
+    ? `${BASE_URL}/?s=${encodeURIComponent(q)}&paged=${page}`
     : `${BASE_URL}/?s=${encodeURIComponent(q)}`;
 }
 
@@ -115,7 +118,7 @@ export async function getPosts({
       return merged.slice(0, 48);
     }
     const url = page > 1
-      ? (filter.includes("?") ? `${BASE_URL}${filter}&page=${page}` : `${BASE_URL}${filter}page/${page}/`)
+      ? (filter.includes("?") ? `${BASE_URL}${filter}&paged=${page}` : `${BASE_URL}${filter}page/${page}/`)
       : `${BASE_URL}${filter}`;
     return await fetchList(url, signal, providerContext);
   } catch {

@@ -47,7 +47,7 @@
   {
     "display_name": "HentaiFox",
     "value": "hentaifox",
-    "version": "1.2.0",
+    "version": "1.3.0",
     "icon": "https://hentaifox.com/favicon.ico",
     "type": "comic",
     "hasSettings": false,
@@ -56,7 +56,7 @@
   {
     "display_name": "MultPorn",
     "value": "multporn",
-    "version": "1.3.0",
+    "version": "1.4.0",
     "icon": "https://multporn.net/favicon.ico",
     "type": "comic",
     "hasSettings": false,
@@ -65,7 +65,7 @@
   {
     "display_name": "KingComix",
     "value": "kingcomix",
-    "version": "1.2.0",
+    "version": "1.3.0",
     "icon": "https://kingcomix.com/favicon.ico",
     "type": "comic",
     "hasSettings": false,
@@ -74,7 +74,7 @@
   {
     "display_name": "E-Hentai (Western & Doujinshi)",
     "value": "ehentai",
-    "version": "1.3.0",
+    "version": "1.4.0",
     "icon": "https://e-hentai.org/favicon.ico",
     "type": "comic",
     "hasSettings": false,
