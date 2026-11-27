@@ -170,7 +170,10 @@ export async function getPosts({
 
   if (page > 1) {
     if (baseFilter.includes("/porncomic/")) {
-      targetUrl = `${BASE_URL}/porncomic/page/${page}/${baseFilter.substring(baseFilter.indexOf("?"))}`;
+      const queryPart = baseFilter.includes("?")
+        ? baseFilter.substring(baseFilter.indexOf("?"))
+        : "";
+      targetUrl = `${BASE_URL}/porncomic/page/${page}/${queryPart}`;
     } else if (baseFilter.includes("?")) {
       targetUrl = `${BASE_URL}${baseFilter}&page=${page}`;
     } else {
