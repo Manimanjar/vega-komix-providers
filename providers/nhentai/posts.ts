@@ -20,7 +20,7 @@ function formatGallery(g: any): Post {
     ? `${THUMB_HOST}/${thumbPath.replace(/^\/+/, "")}`
     : "";
   const title =
-    g.english_title || g.title?.pretty || g.title?.english || g.title?.japanese || `Gallery #${g.id}`;
+    g.title?.english || g.english_title || g.title?.pretty || g.title?.japanese || `Gallery #${g.id}`;
   return {
     title,
     link: `${BASE_URL}/g/${g.id}/`,
